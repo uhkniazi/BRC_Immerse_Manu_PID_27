@@ -65,13 +65,13 @@ ob = CFastqQualityBatch(dfFiles$name, cNames, fReadDirection, lMetaData)
 setwd(gcswd)
 n = make.names(paste('CFastqQualityBatch data id 49 manu rds'))
 n2 = paste0('~/Data/MetaData/', n)
-save(ob, file=n2)
+#save(ob, file=n2)
 
 ## note: comment out as this entry has been made in db
 db = dbConnect(MySQL(), user='rstudio', password='12345', dbname='Projects', host='127.0.0.1')
 dbListTables(db)
 dbListFields(db, 'MetaFile')
-df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/', comment='pre trim FASTQ quality checks on John FOG1 KO mouse data')
+df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/', comment='pre trim FASTQ quality checks on Manus Immerse cardiac cohort human data')
 #dbWriteTable(db, name = 'MetaFile', value=df, append=T, row.names=F)
 dbDisconnect(db)
 
@@ -111,9 +111,8 @@ fBatch = ob@fReadDirection
 str(ob@lMeta$files)
 d = ob@lMeta$files$description
 d = strsplit(d, ';')
-fBatch = factor(sapply(d, function(x) x[2]))
-d = strsplit(ob@lMeta$files$group3, '_')
-fBatch = factor(ob@lMeta$files$group3)
+fBatch = factor(sapply(d, function(x) x[6]))
+fBatch = factor(ob@lMeta$files$group1)
 ## try some various factors to make the plots of low dimensional summaries
 plot.mean.summary(oDiag, fBatch)
 plot.sigma.summary(oDiag, fBatch)
@@ -133,11 +132,11 @@ lAlphabets = lapply(i, function(x){
   return(m)
 })
 
-mAlphabet = do.call(cbind, lapply(lAlphabets, function(x) return(x[,'A'])))
+mAlphabet = do.call(cbind, lapply(lAlphabets, function(x) return(x[,'C'])))
 dim(mAlphabet)
 i = grep('1', ob@fReadDirection)
-colnames(mAlphabet) = ob@lMeta$files$idSample[i]
-oDiag.2 = CDiagnosticPlots(mAlphabet, 'forward base A')
+colnames(mAlphabet) = ob@lMeta$files$title[i]
+oDiag.2 = CDiagnosticPlots(mAlphabet, 'forward base B')
 
 ## turning off automatic jitters
 ## we set jitter to FALSE for PCA, otherwise, in sparse matrix a random jitter is added to avoid divisions by zeros
@@ -146,12 +145,12 @@ l$PCA.jitter = F; l$HC.jitter = F;
 oDiag.2 = CDiagnosticPlotsSetParameters(oDiag.2, l)
 
 i = grep('1', ob@fReadDirection)
-fBatch = factor(ob@lMeta$files$group2[i])
+fBatch = factor(ob@lMeta$files$group1[i])
 length(fBatch)
-f = factor(ob@lMeta$files$group2[i])
-fBatch = fBatch:f
-d = strsplit(ob@lMeta$files$group3[i], '_')
-fBatch = factor(sapply(d, function(x) x[2]))
+
+d = ob@lMeta$files$description
+d = strsplit(d, ';')
+fBatch = factor(sapply(d, function(x) x[6]))[i]
 
 ## try some various factors to make the plots of low dimensional summaries
 plot.mean.summary(oDiag.2, fBatch)
