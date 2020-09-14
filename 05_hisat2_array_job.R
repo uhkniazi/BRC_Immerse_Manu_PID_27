@@ -43,12 +43,12 @@ cvJobName = '#SBATCH --job-name=hisat2-array'
 cvNodes = '#SBATCH --nodes=1'
 cvProcessors = '#SBATCH --ntasks=4'
 # format d-hh:mm:ss
-cvRuntime = '#SBATCH --time=1-05:005:00'
+cvRuntime = '#SBATCH --time=4-05:005:00'
 cvPartition = '#SBATCH --partition brc'
 # How much memory you need.
 # --mem will define memory per node and
 # --mem-per-cpu will define memory per CPU/core. Choose one of those.
-cvMemoryReserve = '#SBATCH --mem=6000MB'
+cvMemoryReserve = '#SBATCH --mem-per-cpu=6000MB'
 # Turn on mail notification. There are many possible self-explaining values:
 # NONE, BEGIN, END, FAIL, ALL (including all aforementioned)
 # For more values, check "man sbatch"
