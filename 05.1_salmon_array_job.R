@@ -17,16 +17,16 @@ dbListTables(db)
 # check how many files each sample has
 g_did
 q = paste0('select count(File.idSample) as files, Sample.idData, Sample.title, Sample.id as SampleID , Sample.group1 as g1 from File, Sample
-           where (Sample.idData = 49 and File.idSample = Sample.id) group by File.idSample')
+           where (Sample.idData = 49 and File.idSample = Sample.id and File.type like "fastq") group by File.idSample')
 dfQuery = dbGetQuery(db, q)
 dfQuery$title = gsub(" ", "", dfQuery$title, fixed = T)
 dim(dfQuery)
 dfQuery = na.omit(dfQuery)
-dfQuery
+head(dfQuery)
 
 # get the count of files
 q = paste0('select File.*, Sample.idData, Sample.group1 as g1 from File, Sample 
-           where (Sample.idData = 49) and (File.idSample = Sample.id) ')
+           where (Sample.idData = 49) and (File.idSample = Sample.id) and (File.type like "fastq")')
 dfCounts = dbGetQuery(db, q)
 dfCounts$name = gsub(" ", "", dfCounts$name, fixed = T)
 head(dfCounts)
@@ -35,20 +35,20 @@ dim(dfCounts)
 
 # for each sample id, get the corresponding files
 cvQueries = paste0('select File.*, Sample.title from File, Sample 
-                   where (Sample.idData = 49 and Sample.id =', dfQuery$SampleID, ') and (File.idSample = Sample.id) ')
+                   where (Sample.idData = 49 and Sample.id =', dfQuery$SampleID, ') and (File.idSample = Sample.id) and File.type like "fastq" ')
 
 # set header variables 
 cvShell = '#!/bin/bash -l'
 cvJobName = '#SBATCH --job-name=salmon-array'
 cvNodes = '#SBATCH --nodes=1'
-cvProcessors = '#SBATCH --ntasks=4'
+cvProcessors = '#SBATCH --ntasks=8'
 # format d-hh:mm:ss
 cvRuntime = '#SBATCH --time=1-05:005:00'
 cvPartition = '#SBATCH --partition brc'
 # How much memory you need.
 # --mem will define memory per node and
 # --mem-per-cpu will define memory per CPU/core. Choose one of those.
-cvMemoryReserve = '#SBATCH --mem=6000MB'
+cvMemoryReserve = '#SBATCH --mem-per-cpu=6000MB'
 # Turn on mail notification. There are many possible self-explaining values:
 # NONE, BEGIN, END, FAIL, ALL (including all aforementioned)
 # For more values, check "man sbatch"
@@ -56,13 +56,13 @@ cvMail = '#SBATCH --mail-type=END,FAIL'
 # set array job loop
 length(cvQueries)
 dim(dfCounts)
-cvArrayJob = '#SBATCH --array=1-2'
+cvArrayJob = '#SBATCH --array=1-60'
 
 # set the directory names
 cvInput = 'input/'
 cvOutput = 'output/Salmon/'
 cvSalmon = 'salmon'
-cvGeneIndex = '/users/k1625253/scratch/old-scratch_rosalind-legacy-import_2020-01-28/Data/MetaData/GenomeIndex/salmon_transcriptome_index/salmon_sa_index/'
+cvGeneIndex = '/users/k1625253/scratch/old-scratch_rosalind-legacy-import_2020-01-28/Data/MetaData/GenomeIndex/salmon_transcriptome_index/gencode.v35.transcripts_index/'
 
 # create a parameter file and shell script
 dir.create('AutoScripts')
@@ -115,7 +115,7 @@ inr2=`sed -n ${number}p $paramfile | awk '{print $2}'`
 outsal=`sed -n ${number}p $paramfile | awk '{print $3}'`
 
 # 9. Run the program.", oFile)
-p1 = paste('salmon quant -i', cvGeneIndex, '-p 4 -l A', '-1', '$inr1', '-2', '$inr2', '-o', '$outsal', sep=' ')
+p1 = paste('salmon quant -i', cvGeneIndex, '-p 8 -l ISR', '-1', '$inr1', '-2', '$inr2', '-o', '$outsal', sep=' ')
 com = paste(p1)
 
 writeLines(com, oFile)
