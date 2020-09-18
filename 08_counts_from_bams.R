@@ -87,6 +87,6 @@ db = dbConnect(MySQL(), user='rstudio', password='12345', dbname='Projects', hos
 dbListTables(db)
 dbListFields(db, 'MetaFile')
 df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/',
-                comment='list of Count matrix from john fog-1 ko mouse project with quality 10 and duplicates removed and strands reversed')
+                comment='list of gene Count matrix from manu immerse cardiac cohort with quality 10 and duplicates removed and strands reversed')
 # dbWriteTable(db, name = 'MetaFile', value=df, append=T, row.names=F)
 dbDisconnect(db)
