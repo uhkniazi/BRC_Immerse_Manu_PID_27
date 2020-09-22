@@ -68,11 +68,16 @@ identical(colnames(mData.norm), as.character(dfSample$id))
 ## delete sample section after testing
 mData.norm = round(mData.norm, 0)
 
+# split the data into parts to run the model faster
+# as too many transcripts
+iIndex = 1:nrow(mData.norm)
+iSplit = cut(iIndex, breaks = 5, include.lowest = T, labels = 1:5)
 # set.seed(123)
 # i = sample(1:nrow(mData.norm), 100, replace = F)
 # dfData = data.frame(t(mData.norm[i,]))
+dfData = data.frame(t(mData.norm[iSplit == 6,]))
 
-dfData = data.frame(t(mData.norm))
+#dfData = data.frame(t(mData.norm))
 dim(dfData)
 dfData = stack(dfData)
 
