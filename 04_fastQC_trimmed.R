@@ -66,13 +66,13 @@ ob = CFastqQualityBatch(dfFiles$name, cNames, fReadDirection, lMetaData)
 setwd(gcswd)
 n = make.names(paste('CFastqQualityBatch data post trimming id 49 manu rds'))
 n2 = paste0('~/Data/MetaData/', n)
-save(ob, file=n2)
+#save(ob, file=n2)
 
 ## note: comment out as this entry has been made in db
 db = dbConnect(MySQL(), user='rstudio', password='12345', dbname='Projects', host='127.0.0.1')
 dbListTables(db)
 dbListFields(db, 'MetaFile')
-df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/', comment='pre trim FASTQ quality checks on John FOG1 KO mouse data')
+df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/', comment='post trim FASTQ quality checks on Manu immerse cardiac cohort')
 #dbWriteTable(db, name = 'MetaFile', value=df, append=T, row.names=F)
 dbDisconnect(db)
 
@@ -100,7 +100,7 @@ dim(mBatch)
 mBatch[1:10, 1:4]
 
 ## creat an object of diagnostics class to make plots
-oDiag = CDiagnosticPlots(mBatch, 'Base Quality')
+oDiag = CDiagnosticPlots(mBatch, 'Base Quality Trimmed')
 
 ## turning off automatic jitters
 ## we set jitter to FALSE for PCA, otherwise, in sparse matrix a random jitter is added to avoid divisions by zeros
@@ -119,7 +119,7 @@ fBatch = factor(ob@lMeta$files$group3)
 plot.mean.summary(oDiag, fBatch)
 plot.sigma.summary(oDiag, fBatch)
 boxplot.median.summary(oDiag, fBatch)
-plot.PCA(oDiag, fBatch, csLabels = '')
+plot.PCA(oDiag, fBatch, csLabels = ob@lMeta$files$title)
 plot.dendogram(oDiag, fBatch, labels_cex = 0.4)
 
 ## looking at alphabets 
@@ -134,11 +134,11 @@ lAlphabets = lapply(i, function(x){
   return(m)
 })
 
-mAlphabet = do.call(cbind, lapply(lAlphabets, function(x) return(x[,'A'])))
+mAlphabet = do.call(cbind, lapply(lAlphabets, function(x) return(x[,'C'])))
 dim(mAlphabet)
 i = grep('1', ob@fReadDirection)
-colnames(mAlphabet) = ob@lMeta$files$idSample[i]
-oDiag.2 = CDiagnosticPlots(mAlphabet, 'forward base A')
+colnames(mAlphabet) = ob@lMeta$files$title[i]
+oDiag.2 = CDiagnosticPlots(mAlphabet, 'forward base T')
 
 ## turning off automatic jitters
 ## we set jitter to FALSE for PCA, otherwise, in sparse matrix a random jitter is added to avoid divisions by zeros
@@ -147,12 +147,10 @@ l$PCA.jitter = F; l$HC.jitter = F;
 oDiag.2 = CDiagnosticPlotsSetParameters(oDiag.2, l)
 
 i = grep('1', ob@fReadDirection)
-fBatch = factor(ob@lMeta$files$group2[i])
+fBatch = factor(ob@lMeta$files$group1[i])
 length(fBatch)
-f = factor(ob@lMeta$files$group2[i])
-fBatch = fBatch:f
-d = strsplit(ob@lMeta$files$group3[i], '_')
-fBatch = factor(sapply(d, function(x) x[2]))
+fBatch = factor(gsub('T1|T0', '', ob@lMeta$files$title[i]))
+
 
 ## try some various factors to make the plots of low dimensional summaries
 plot.mean.summary(oDiag.2, fBatch)
