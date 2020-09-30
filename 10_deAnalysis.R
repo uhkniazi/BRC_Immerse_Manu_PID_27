@@ -75,7 +75,7 @@ iSplit = cut(iIndex, breaks = 5, include.lowest = T, labels = 1:5)
 # set.seed(123)
 # i = sample(1:nrow(mData.norm), 100, replace = F)
 # dfData = data.frame(t(mData.norm[i,]))
-dfData = data.frame(t(mData.norm[iSplit == 6,]))
+dfData = data.frame(t(mData.norm[iSplit == 5,]))
 
 #dfData = data.frame(t(mData.norm))
 dim(dfData)
@@ -175,6 +175,7 @@ ptm.end = proc.time()
 print(fit.stan, c('sigmaRan1'), digits=3)
 print(fit.stan, c('phi'), digits=3)
 print(fit.stan, c('rGroupsJitter1'))
+print(fit.stan, c('betas'))
 traceplot(fit.stan, c('sigmaRan1[1]'))
 traceplot(fit.stan, c('sigmaRan1[2]'))
 traceplot(fit.stan, c('rGroupsJitter1[1]', 'sigmaRan1[1]'))
@@ -228,16 +229,34 @@ l = tapply(d$cols, d$split, FUN = function(x, base='T0', deflection='T1') {
   return(r)
 })
 
-dfResults = do.call(rbind, l)
+dfResults.5 = do.call(rbind, l)
+dfResults = rbind(dfResults.1, dfResults.2, dfResults.3,
+                  dfResults.4, dfResults.5)
+dim(dfResults)
+dim(mData.norm)
 dfResults$adj.P.Val = p.adjust(dfResults$pvalue, method='BH')
 
 ### plot the results
 dfResults$logFC = dfResults$difference
 dfResults$P.Value = dfResults$pvalue
-library(org.Mm.eg.db)
-## remove X from annotation names
-dfResults$ind = gsub('X', '', as.character(dfResults$ind))
-df = AnnotationDbi::select(org.Mm.eg.db, keys = as.character(dfResults$ind), columns = 'SYMBOL', keytype = 'ENTREZID')
+
+## download annotation file from
+## ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_35/gencode.v35.metadata.EntrezGene.gz
+dfAnnotation = read.csv(file.choose(), stringsAsFactors = F, sep='\t', header=F)
+table(rownames(dfResults) %in% dfAnnotation$V1)
+dfAnnotation = dfAnnotation[dfAnnotation$V1 %in% rownames(dfResults), ]
+dfResults = dfResults[rownames(dfResults) %in% dfAnnotation$V1, ]
+table(rownames(dfResults) %in% dfAnnotation$V1)
+## put the annotation table in same order
+i = match(rownames(dfResults), dfAnnotation$V1)
+dfAnnotation = dfAnnotation[i,]
+# sanity check
+identical(rownames(dfResults), dfAnnotation$V1)
+dfResults$ind = as.character(dfAnnotation$V2)
+head(dfResults)
+
+library(org.Hs.eg.db)
+df = AnnotationDbi::select(org.Hs.eg.db, keys = as.character(dfResults$ind), columns = 'SYMBOL', keytype = 'ENTREZID')
 i = match(dfResults$ind, df$ENTREZID)
 df = df[i,]
 dfResults$SYMBOL = df$SYMBOL
@@ -247,6 +266,7 @@ f_plotVolcano(dfResults, 'ind:WT vs ni:WT')#, fc.lim=c(-2.5, 2.5))
 f_plotVolcano(dfResults, 'ind:WT vs ni:WT', fc.lim=range(dfResults$logFC))
 
 m = tapply(dfData$values, dfData$ind, mean)
+table(names(m) %in% rownames(dfResults))
 i = match(rownames(dfResults), names(m))
 m = m[i]
 identical(names(m), rownames(dfResults))
@@ -255,27 +275,27 @@ table(dfResults$adj.P.Val < 0.01)
 quantile(round(abs(dfResults$logFC),3), 0:10/10)
 table(dfResults$adj.P.Val < 0.01 & abs(dfResults$logFC) > 0.5)
 ## save the results 
-write.csv(dfResults, file='results/DEAnalysis_ind:MELWTVSn.i:MELWT.xls')
+write.csv(dfResults, file='results/DEAnalysis_SalmonT1VST0.xls')
 
 ######### do a comparison with deseq2
-str(dfSample.2)
-f = as.character(dfSample.2$fReplicates)
-f = gsub('(.+)-\\d+$', replacement = '\\1', f)
-dfDesign = data.frame(Treatment = factor(dfSample.2$group1):factor(dfSample.2$group2), 
-                      Patient=factor(f),
+str(dfSample)
+dfDesign = data.frame(Treatment = fTime, 
+                      Patient=fPid,
                       row.names=colnames(mData))
 
-oDseq = DESeqDataSetFromMatrix(mData, dfDesign, design = ~ Treatment)# + Patient)
+oDseq = DESeqDataSetFromMatrix(round(mData,0), dfDesign, design = ~ Treatment + Patient)
 oDseq = DESeq(oDseq)
 
 plotDispEsts(oDseq)
 levels(dfDesign$Treatment)
-oRes = results(oDseq, contrast = c('Treatment', 'ind:MELWT', 'n.i:MELWT'))
+oRes = results(oDseq, contrast = c('Treatment', 'T1', 'T0'))
 plotMA(oRes)
 temp = as.data.frame(oRes)
-i = match((dfResults$ind), rownames(temp))
+table(rownames(temp) %in% rownames(dfResults))
+temp = temp[rownames(temp) %in% rownames(dfResults), ]
+i = match(rownames(dfResults), rownames(temp))
 temp = temp[i,]
-identical((dfResults$ind), rownames(temp))
+identical(rownames(dfResults), rownames(temp))
 plot(dfResults$logFC, log(2^temp$log2FoldChange), pch=20)
 table(oRes$padj < 0.01)
 write.csv(oRes, file='results/DESeq.xls')
