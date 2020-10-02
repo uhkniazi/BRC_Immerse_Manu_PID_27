@@ -178,6 +178,8 @@ ptm.end = proc.time()
 print(fit.stan, c('sigmaRan1'), digits=3)
 print(fit.stan, c('phi'), digits=3)
 print(fit.stan, c('rGroupsJitter1'))
+print(fit.stan, c('betas'))
+
 traceplot(fit.stan, c('sigmaRan1[1]'))
 traceplot(fit.stan, c('sigmaRan1[2]'))
 traceplot(fit.stan, c('rGroupsJitter1[1]', 'sigmaRan1[1]'))
@@ -237,10 +239,10 @@ dfResults$adj.P.Val = p.adjust(dfResults$pvalue, method='BH')
 ### plot the results
 dfResults$logFC = dfResults$difference
 dfResults$P.Value = dfResults$pvalue
-library(org.Mm.eg.db)
+library(org.Hs.eg.db)
 ## remove X from annotation names
 dfResults$ind = gsub('X', '', as.character(dfResults$ind))
-df = AnnotationDbi::select(org.Mm.eg.db, keys = as.character(dfResults$ind), columns = 'SYMBOL', keytype = 'ENTREZID')
+df = AnnotationDbi::select(org.Hs.eg.db, keys = as.character(dfResults$ind), columns = 'SYMBOL', keytype = 'ENTREZID')
 i = match(dfResults$ind, df$ENTREZID)
 df = df[i,]
 dfResults$SYMBOL = df$SYMBOL
@@ -256,24 +258,22 @@ identical(names(m), rownames(dfResults))
 plotMeanFC(log(m), dfResults, 0.01, 'lei vs nl')
 table(dfResults$adj.P.Val < 0.01)
 quantile(round(abs(dfResults$logFC),3), 0:10/10)
-table(dfResults$adj.P.Val < 0.01 & abs(dfResults$logFC) > 0.5)
+table(dfResults$adj.P.Val < 0.01 & abs(dfResults$logFC) > 0.3)
 ## save the results 
-write.csv(dfResults, file='results/DEAnalysis_ind:MELWTVSn.i:MELWT.xls')
+write.csv(dfResults, file='results/hisat2/DEAnalysis_HisatT1VST0.xls')
 
 ######### do a comparison with deseq2
-str(dfSample.2)
-f = as.character(dfSample.2$fReplicates)
-f = gsub('(.+)-\\d+$', replacement = '\\1', f)
-dfDesign = data.frame(Treatment = factor(dfSample.2$group1):factor(dfSample.2$group2), 
-                      Patient=factor(f),
+str(dfSample)
+dfDesign = data.frame(Treatment = fTime, 
+                      Patient=fPid,
                       row.names=colnames(mData))
 
-oDseq = DESeqDataSetFromMatrix(mData, dfDesign, design = ~ Treatment)# + Patient)
+oDseq = DESeqDataSetFromMatrix(round(mData,0), dfDesign, design = ~ Treatment + Patient)
 oDseq = DESeq(oDseq)
 
 plotDispEsts(oDseq)
 levels(dfDesign$Treatment)
-oRes = results(oDseq, contrast = c('Treatment', 'ind:MELWT', 'n.i:MELWT'))
+oRes = results(oDseq, contrast = c('Treatment', 'T1', 'T0'))
 plotMA(oRes)
 temp = as.data.frame(oRes)
 i = match((dfResults$ind), rownames(temp))
@@ -281,7 +281,7 @@ temp = temp[i,]
 identical((dfResults$ind), rownames(temp))
 plot(dfResults$logFC, log(2^temp$log2FoldChange), pch=20)
 table(oRes$padj < 0.01)
-write.csv(oRes, file='results/DESeq.xls')
+write.csv(oRes, file='results/hisat2/DESeq.xls')
 
 r1 = dfResults
 r2 = oRes
