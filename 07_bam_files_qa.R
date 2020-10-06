@@ -76,17 +76,17 @@ lAllBams$desc = paste('CBamScaffold object from bam files before duplicate remov
 n2 = paste0('~/Data/MetaData/', n)
 #save(lAllBams, file=n2)
 
-#lAllBams.pre = lAllBams
+lAllBams.pre = lAllBams
 
 # comment out as this has been done once
-# library('RMySQL')
-# db = dbConnect(MySQL(), user='rstudio', password='12345', dbname='Projects', host='127.0.0.1')
-# dbListTables(db)
-# dbListFields(db, 'MetaFile')
-# df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/',
-#                 comment='CBamScaffold object from bam files before duplicate removal')
-# dbWriteTable(db, name = 'MetaFile', value=df, append=T, row.names=F)
-# dbDisconnect(db)
+library('RMySQL')
+db = dbConnect(MySQL(), user='rstudio', password='12345', dbname='Projects', host='127.0.0.1')
+dbListTables(db)
+dbListFields(db, 'MetaFile')
+df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/',
+                comment='CBamScaffold object from bam files before duplicate removal')
+#dbWriteTable(db, name = 'MetaFile', value=df, append=T, row.names=F)
+dbDisconnect(db)
 # number of reads aligned
 f1 = function(ob){
   n = sapply(ob, function(x) length(CBamScaffold.getReadWidth(x)))
@@ -101,7 +101,7 @@ lAllBams$meta = NULL
 identical(as.character(names(lAllBams)), as.character(dfSample.pre$id))
 temp = strsplit(as.character(dfSample.pre$title), '_')
 temp = sapply(temp, function(x) return(x[5]))
-names(lAllBams) = temp
+names(lAllBams) = as.character(dfSample.pre$title)
 
 iReadCount.pre = sapply(lAllBams, f1)
 ### repeat on the bam files after duplicate removal
@@ -158,14 +158,14 @@ n2 = paste0('~/Data/MetaData/', n)
 #save(lAllBams, file=n2)
 
 # comment out as this has been done once
-# library('RMySQL')
-# db = dbConnect(MySQL(), user='rstudio', password='12345', dbname='Projects', host='127.0.0.1')
-# dbListTables(db)
-# dbListFields(db, 'MetaFile')
-# df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/',
-#                 comment='CBamScaffold object from bam files after duplicate removal')
-# dbWriteTable(db, name = 'MetaFile', value=df, append=T, row.names=F)
-# dbDisconnect(db)
+library('RMySQL')
+db = dbConnect(MySQL(), user='rstudio', password='12345', dbname='Projects', host='127.0.0.1')
+dbListTables(db)
+dbListFields(db, 'MetaFile')
+df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/',
+                comment='CBamScaffold object from bam files after duplicate removal')
+#dbWriteTable(db, name = 'MetaFile', value=df, append=T, row.names=F)
+dbDisconnect(db)
 
 ### create the plots of interest
 getwd()
@@ -174,9 +174,7 @@ dfSample = lAllBams$meta
 lAllBams$desc = NULL
 lAllBams$meta = NULL
 identical(as.character(names(lAllBams)), as.character(dfSample$id))
-temp = strsplit(as.character(dfSample$title), '_')
-temp = sapply(temp, function(x) return(x[5]))
-names(lAllBams) = temp
+names(lAllBams) = as.character(dfSample$title)
 
 pdf(file='results/bam.qa.pdf')
 par(mfrow=c(2,2))
@@ -280,7 +278,7 @@ names(lMat.ordered) = cvSeqnames
 # choose the grouping to colour with
 head(dfSample)
 fGroups = factor(dfSample$group1)
-fGroups = factor(dfSample$group2)
+#fGroups = factor(dfSample$group2)
 levels(fGroups)
 fGroups = fGroups:factor(dfSample$group2)
 names(lAllBams)
@@ -303,5 +301,36 @@ temp = sapply(cvSeqnames, function(x){
 # par(mfrow=c(1,1))
 # plot.new()
 # legend('center', legend = levels(fGroups), ncol=3, col = iCol, lty=1:length(iCol), cex=0.6, lwd=2)
+
+## get the average coverage matrix for use in PCA
+mDiag = sapply(cvSeqnames, function(x){
+  colMeans(lMat.ordered[[x]])
+})
+
+url = 'https://raw.githubusercontent.com/uhkniazi/CDiagnosticPlots/master/CDiagnosticPlots.R'
+download(url, 'CDiagnosticPlots.R')
+
+# load the required packages
+source('CDiagnosticPlots.R')
+# delete the file after source
+unlink('CDiagnosticPlots.R')
+
+## creat an object of diagnostics class to make plots
+oDiag = CDiagnosticPlots(t(mDiag), 'Genome Coverage')
+
+## turning off automatic jitters
+## we set jitter to FALSE for PCA, otherwise, in sparse matrix a random jitter is added to avoid divisions by zeros
+l = CDiagnosticPlotsGetParameters(oDiag)
+l$PCA.jitter = F; l$HC.jitter = F;
+oDiag = CDiagnosticPlotsSetParameters(oDiag, l)
+
+
+fBatch = factor(dfSample$group1)
+## try some various factors to make the plots of low dimensional summaries
+plot.mean.summary(oDiag, fBatch)
+plot.sigma.summary(oDiag, fBatch)
+boxplot.median.summary(oDiag, fBatch)
+plot.PCA(oDiag, fBatch)
+plot.dendogram(oDiag, fBatch, labels_cex = 0.4)
 
 dev.off(dev.cur())
