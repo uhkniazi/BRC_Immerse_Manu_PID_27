@@ -43,7 +43,22 @@ mData = mCounts
 dim(mData)
 
 i = grep('ercc', rownames(mData), ignore.case = T)
+mErcc = mData[i, ]
 mData = mData[-i,]
+
+## test 2 different filters
+i = rowMeans(mErcc)
+table(i < 3)
+
+## similar one used in RUVSeq vignette
+i2 = apply(mErcc, 1, function(x) length(x[x>5]) >= 2)
+table(i2)
+
+table(names(i[i < 3]) %in% names(i2[!i2]))
+
+mErcc = mErcc[!(i < 3), ]
+dim(mErcc)
+
 # drop the rows where average across rows is less than 3
 i = rowMeans(mData)
 table( i < 3)
@@ -62,12 +77,35 @@ ivProb = apply(mData, 1, function(inData) {
 
 hist(ivProb)
 
+## proportion of ERCCs out of total read count
+g = colSums(mData)
+e = colSums(mErcc)
+t = g + e
+barplot(e/t)
+
+fPid = factor(gsub('T0|T1', '', dfSample$title))
+nlevels(fPid)
+fTime = factor(dfSample$group1)
+nlevels(fTime)
+
+barplot(e/t, col=c(2,3)[as.numeric(fTime)])
+abline(h = mean(e/t))
+
+barplot((e/t)[order(fTime)], col=c(2,3)[as.numeric(fTime)[order(fTime)]])
+abline(h = mean(e/t))
+
+barplot(e/t, col=rainbow(nlevels(fPid))[as.numeric(fPid)])
+
+barplot((e/t)[order(fPid)], col=rainbow(nlevels(fPid))[as.numeric(fPid)[order(fPid)]])
+
 library(DESeq2)
-sf = estimateSizeFactorsForMatrix(mData)
+mData = rbind(mData, mErcc)
+i = grep('ercc', rownames(mData), ignore.case = T)
+sf = estimateSizeFactorsForMatrix(mData, controlGenes = i)
 mData.norm = sweep(mData, 2, sf, '/')
 
 identical(colnames(mData.norm), as.character(dfSample$id))
-
+mData.norm = mData.norm[-i, ]
 ## delete sample section after testing
 mData.norm = round(mData.norm, 0)
 
