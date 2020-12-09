@@ -77,26 +77,37 @@ ivProb = apply(mData, 1, function(inData) {
 
 hist(ivProb)
 
-## proportion of ERCCs out of total read count
-g = colSums(mData)
-e = colSums(mErcc)
-t = g + e
-barplot(e/t)
-
+#### check ercc quality
 fPid = factor(gsub('T0|T1', '', dfSample$title))
 nlevels(fPid)
 fTime = factor(dfSample$group1)
 nlevels(fTime)
 
-barplot(e/t, col=c(2,3)[as.numeric(fTime)])
-abline(h = mean(e/t))
+plot.ercc.proportions(colSums(rbind(mData, mErcc)), colSums(mErcc),
+                      fTime, main='Time', las=2)
 
-barplot((e/t)[order(fTime)], col=c(2,3)[as.numeric(fTime)[order(fTime)]])
-abline(h = mean(e/t))
+plot.ercc.proportions(colSums(rbind(mData, mErcc)), colSums(mErcc),
+                      fPid, main='Time', las=2)
 
-barplot(e/t, col=rainbow(nlevels(fPid))[as.numeric(fPid)])
 
-barplot((e/t)[order(fPid)], col=rainbow(nlevels(fPid))[as.numeric(fPid)[order(fPid)]])
+## prepare input data and select groupings
+par(mfrow=c(2,3))
+for (i in 1:6){
+  m = log(rbind(mData, mErcc)+1)
+  head(m)
+  colnames(m) = as.character(fTime)
+  m = m[,colnames(m) == 'T0']
+  m = m[,sample(1:ncol(m), size = 10, replace = F)]
+  f = gl(2, k = 5, labels = c('1', '2'))
+  levels(f)
+  plot.ercc.MD(m, f, main='MD plot', ylim=c(-1.5, 1.5))
+}
+
+par(mfrow=c(1,1))
+m = log(rbind(mData, mErcc)+1)
+head(m)
+colnames(m) = as.character(fTime)
+plot.ercc.MD(m, fTime, main='MD plot', ylim=c(-1.5, 1.5))
 
 library(DESeq2)
 mData = rbind(mData, mErcc)

@@ -59,3 +59,30 @@ plotMeanFC = function(m, dat, p.cut, title){
   #mh = cut(m, breaks=quantile(m, 0:50/50), include.lowest = T)
   plot(m, dat$logFC, col=col, pch=20, main=title, xlab='log Mean', ylab='logFC', ylim=c(-2, 2), cex=0.6)
 }
+
+plot.ercc.proportions = function(ivTotal, ivErcc, fGroupings, ...){
+  pErcc = ivErcc/ivTotal * 100
+  c = rainbow(nlevels(fGroupings))
+  barplot(pErcc[order(fGroupings)], col=c[as.numeric(fGroupings)[order(fGroupings)]],
+          ...)
+  abline(h = mean(pErcc), lty=2)
+}
+
+plot.ercc.MD = function(mLogCounts, fGroupings, ...){
+  if (nlevels(fGroupings) != 2) stop('grouping factor should be 2 levels only')
+  mResults = apply(mLogCounts, 1, function(x){
+    tapply(x, fGroupings, mean)
+  })
+  mResults = t(mResults)
+  ## difference
+  d = mResults[,2] - mResults[,1]
+  ## choose colour
+  c = rep('grey', length.out=length(d))
+  c[grep('ercc', names(d), ignore.case = T)] = 'blue'
+  plot(rowMeans(mLogCounts), d, pch=20, col=c, xlab='mean log(count+1)', 
+       ylab='log difference', ...)
+  abline(h = 0, lty=2)
+  i = grep('ercc', rownames(mLogCounts), ignore.case = T)
+  lines(lowess(rowMeans(mLogCounts)[-i], d[-i]), col='black')
+  lines(lowess(rowMeans(mLogCounts)[i], d[i]), col='blue')
+}
