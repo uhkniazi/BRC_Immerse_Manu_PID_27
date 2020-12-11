@@ -5,7 +5,7 @@
 
 source('header.R')
 
-lFiles = list.files('results/hisat2/', pattern='DEAnalysis*', full.names = T, ignore.case = T)
+lFiles = list.files('results/hisat-spikein-merged/', pattern='DEAnalysis*', full.names = T, ignore.case = T)
 
 ldfData = lapply(lFiles, function(x) as.data.frame(read.csv(x, header=T, row.names=1, stringsAsFactors = F)))
 names(ldfData) = lFiles
@@ -21,7 +21,7 @@ ldfData = lapply(ldfData, function(df){
 
 sapply(ldfData, function(df) identical(rownames(df), rn))
 
-cvTitle = gsub('results/hisat2//DEAnalysis_', '', names(ldfData))
+cvTitle = gsub('results/hisat-spikein-merged//DEAnalysis_', '', names(ldfData))
 cvTitle = gsub('.xls', '', cvTitle)
 
 ## redefine plot volcano
@@ -55,44 +55,44 @@ for (i in seq_along(cvTitle)){
 names(ldfData)
 ## select significant genes
 round(quantile(abs(ldfData[[1]]$logFC), 0:10/10), 3)
-dfContrast1.sub = ldfData[[1]][ldfData[[1]]$adj.P.Val < 0.01 & abs(ldfData[[1]]$logFC) >= 0.3,]
+round(quantile(abs(ldfData[[2]]$logFC), 0:10/10), 3)
 
-# # library(VennDiagram)
-# 
-# # create a list for overlaps
-# lVenn = list(rownames(dfContrast1.sub), rownames(dfContrast2.sub), rownames(dfContrast3.sub),
-#              rownames(dfContrast4.sub), rownames(dfContrast5.sub), rownames(dfContrast6.sub),
-#              rownames(dfContrast7.sub), rownames(dfContrast8.sub), rownames(dfContrast9.sub),
-#              rownames(dfContrast10.sub)
-# )
-# names(ldfData)
-# names(lVenn) = cvTitle
-# # calculate overlaps
-# #lVenn.overlap = calculate.overlap(lVenn)
-# cvTitle[c(1, 3, 5)]
-# venn.diagram(lVenn[c(1, 3, 5)], filename = 'results/venn_all_contrasts_DiffMutVsDiffWT.tif', margin=0.1)
-# cvTitle[c(2, 4, 6, 7)]
-# venn.diagram(lVenn[c(2, 4, 6, 7)], filename = 'results/venn_all_contrasts_DiffVsUndiff.tif', margin=0.1)
-# cvTitle[c(8, 9, 10)]
-# venn.diagram(lVenn[c(8, 9, 10)], filename = 'results/venn_all_contrasts_UndiffMutVsUndiffWT.tif', margin=0.1)
+dfContrast1.sub = ldfData[[1]][ldfData[[1]]$adj.P.Val < 0.01 & abs(ldfData[[1]]$logFC) >= 0.3,]
+dfContrast2.sub = ldfData[[2]][ldfData[[2]]$adj.P.Val < 0.01 & abs(ldfData[[2]]$logFC) >= 0.3,]
+
+library(VennDiagram)
+
+# create a list for overlaps
+lVenn = list(rownames(dfContrast1.sub), rownames(dfContrast2.sub)
+)
+names(ldfData)
+names(lVenn) = cvTitle
+# calculate overlaps
+#lVenn.overlap = calculate.overlap(lVenn)
+venn.diagram(lVenn, filename = 'results/hisat-spikein-merged/venn_all_contrasts.tif', margin=0.1)
 
 ## repeat the analysis but separate up and down regulated genes
 # select significant genes
 dfContrast1.up = dfContrast1.sub[dfContrast1.sub$logFC > 0, ]
 dfContrast1.down = dfContrast1.sub[dfContrast1.sub$logFC < 0, ]
 
+dfContrast2.up = dfContrast2.sub[dfContrast2.sub$logFC > 0, ]
+dfContrast2.down = dfContrast2.sub[dfContrast2.sub$logFC < 0, ]
+
 # create a list for overlaps
-lVenn = list(rownames(dfContrast1.up), rownames(dfContrast1.down)
+lVenn = list(rownames(dfContrast1.up), rownames(dfContrast1.down),
+             rownames(dfContrast2.up), rownames(dfContrast2.down)
 )
 
 #cvTitle = gsub('results//DEAnalysis(\\w+)VsControl.xls', '\\1', names(ldfData))
 cvTitle.up = paste(cvTitle, 'up', sep='-')
 cvTitle.down = paste(cvTitle, 'down', sep='-')
-o = c(1, 2)
+o = c(1, 3, 2, 4)
 ## sanity check
 matrix(c(cvTitle.up, cvTitle.down)[o], ncol = 2, byrow = T)
 cvTitle = c(cvTitle.up, cvTitle.down)[o]
 names(lVenn) = cvTitle
+venn.diagram(lVenn, filename = 'results/hisat-spikein-merged/venn_all_contrasts_sub.tif', margin=0.1)
 
 ## create a binary matrix
 cvCommonGenes = unique(do.call(c, lVenn))
@@ -132,4 +132,4 @@ dfCommonGenes = data.frame(mCommonGenes, sig.pvals=rowSums(mCommonGenes), groups
 rownames(dfCommonGenes) = (gsub(pattern = '^X', replacement = '', x = rownames(dfCommonGenes)))
 head(dfCommonGenes)
 
-write.csv(dfCommonGenes, file='results/hisat2/commonDEGenes.xls')
+write.csv(dfCommonGenes, file='results/hisat-spikein-merged/commonDEGenes.xls')
