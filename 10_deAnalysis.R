@@ -309,7 +309,7 @@ table(dfResults$adj.P.Val < 0.01)
 quantile(round(abs(dfResults$logFC),3), 0:10/10)
 table(dfResults$adj.P.Val < 0.01 & abs(dfResults$logFC) > 0.3)
 ## save the results 
-write.csv(dfResults, file='results/hisat2/DEAnalysis_HisatT1VST0.xls')
+write.csv(dfResults, file='results/spikein/DEAnalysis_SpikeinT1VST0.xls')
 
 ######### do a comparison with deseq2
 str(dfSample)
@@ -317,7 +317,9 @@ dfDesign = data.frame(Treatment = fTime,
                       Patient=fPid,
                       row.names=colnames(mData))
 
-oDseq = DESeqDataSetFromMatrix(round(mData,0), dfDesign, design = ~ Treatment + Patient)
+i = grep('ercc', rownames(mData), ignore.case = T)
+
+oDseq = DESeqDataSetFromMatrix(round(mData[-i,],0), dfDesign, design = ~ Treatment + Patient)
 oDseq = DESeq(oDseq)
 
 plotDispEsts(oDseq)
@@ -330,7 +332,7 @@ temp = temp[i,]
 identical((dfResults$ind), rownames(temp))
 plot(dfResults$logFC, log(2^temp$log2FoldChange), pch=20)
 table(oRes$padj < 0.01)
-write.csv(oRes, file='results/hisat2/DESeq.xls')
+write.csv(oRes, file='results/spikein/DESeq.xls')
 
 r1 = dfResults
 r2 = oRes
