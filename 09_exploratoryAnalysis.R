@@ -85,6 +85,20 @@ mErcc = mCounts
 i = grep('ercc', rownames(mErcc), ignore.case = T)
 mErcc = mErcc[i,]
 mData = mData[-i,]
+
+## test 2 different filters
+i = rowMeans(mErcc)
+table(i < 3)
+
+## similar one used in RUVSeq vignette
+i2 = apply(mErcc, 1, function(x) length(x[x>5]) >= 2)
+table(i2)
+
+table(names(i[i < 3]) %in% names(i2[!i2]))
+
+mErcc = mErcc[!(i < 3), ]
+dim(mErcc)
+
 # drop the rows where average across rows is less than 3
 i = rowMeans(mData)
 table( i < 3)
@@ -102,6 +116,38 @@ ivProb = apply(mData, 1, function(inData) {
 })
 
 hist(ivProb)
+
+#### check ercc quality
+fPid = factor(gsub('T0|T1', '', dfSample$title))
+nlevels(fPid)
+fTime = factor(dfSample$group1)
+nlevels(fTime)
+
+plot.ercc.proportions(colSums(rbind(mData, mErcc)), colSums(mErcc),
+                      fTime, main='Time', las=2)
+
+plot.ercc.proportions(colSums(rbind(mData, mErcc)), colSums(mErcc),
+                      fPid, main='Subject ID', las=2)
+
+
+## prepare input data and select groupings
+par(mfrow=c(2,3))
+for (i in 1:6){
+  m = log(rbind(mData, mErcc)+1)
+  head(m)
+  colnames(m) = as.character(fTime)
+  m = m[,colnames(m) == 'T1']
+  m = m[,sample(1:ncol(m), size = 10, replace = F)]
+  f = gl(2, k = 5, labels = c('1', '2'))
+  levels(f)
+  plot.ercc.MD(m, f, main='MD plot - T1 vs T1', ylim=c(-1.5, 1.5))
+}
+
+par(mfrow=c(1,1))
+m = log(rbind(mData, mErcc)+1)
+head(m)
+colnames(m) = as.character(fTime)
+plot.ercc.MD(m, fTime, main='MD plot - T1 vs T0 (raw)', ylim=c(-1.5, 1.5))
 
 library(DESeq2)
 sf = estimateSizeFactorsForMatrix(mData)
@@ -148,14 +194,66 @@ plot.PCA(oDiag.3, fBatch, cex=1, csLabels = as.character(fPid), legend.pos = 'to
 plot.dendogram(oDiag.2, fBatch, labels_cex = 0.7)
 plot.dendogram(oDiag.3, fBatch, labels_cex = 1)
 
+par(mfrow=c(2,2))
+m = log(rbind(mData, mErcc)+1)
+head(m)
+plot.ercc.MD(m, fTime, main='MD plot - T1 vs T0 (raw)', ylim=c(-1.5, 1.5))
+
+m = log(mData.norm+1)
+plot.erccAbsent.MD(m, fTime, main='Global normalisation - T1 vs T0', ylim=c(-1.5, 1.5))
+m = log(mData.norm.2+1)
+plot.ercc.MD(m, fTime, main='Global normalisation - T1 vs T0', ylim=c(-1.5, 1.5))
+
+m1 = log(mData.norm+1)
+m = t(apply(m1, 1, function(x){
+  return(tapply(x, fTime, mean))
+}))
+d1 = m[,2] - m[,1] 
+
+m2 = log(mData.norm.2+1)
+m = t(apply(m2, 1, function(x){
+  return(tapply(x, fTime, mean))
+}))
+d2 = m[,2] - m[,1] 
+i = grep('ercc', names(d2), ignore.case = T)
+d2 = d2[-i]
+m2 = m2[-i,]
+plot(d1, d2)
+
+par(mfrow=c(1,1))
+plot(lowess(rowMeans(m1), d1), type='l')
+plot(lowess(rowMeans(m2), d2), type='l')
+
+plot(lowess(rowMeans(m1), d1), type='l', ylim=c(-0.3, 0.9), xlab="mean log(count+1)",
+     ylab='log difference', main='Lowess Curve trends')
+lines(lowess(rowMeans(m2), d2), lty=2)
+abline(h = 0, lty=3, cex=0.5)
+legend('topleft', legend = c('Global', 'Ercc'), lty=c(1,2))
+
+####### plots within the same group
+par(mfrow=c(2,2))
+for (i in 1:6){
+  m = log(rbind(mData.norm)+1)
+  head(m)
+  colnames(m) = as.character(fTime)
+  m = m[,colnames(m) == 'T0']
+  i = sample(1:ncol(m), size = 10, replace = F)
+  m = m[,i]
+  f = gl(2, k = 5, labels = c('1', '2'))
+  levels(f)
+  plot.erccAbsent.MD(m, f, main='MD plot - T0 vs T0', ylim=c(-1.5, 1.5))
+  m2 = log(mData.norm.2+1)
+  plot.ercc.MD(m2[,i], f, main='MD plot - T0 vs T0', ylim=c(-1.5, 1.5))
+}
+
 ## import the ERCC mix data from sequencing lab
 ## data not available
 
 ######## modelling of PCA components to assign sources of variance to covariates in the design
 par(mfrow=c(1,1))
-plot(oDiag.2@lData$PCA$sdev)
-plot.PCA(oDiag.2, fBatch)
-mPC = oDiag.2@lData$PCA$x[,1:3]
+plot(oDiag.3@lData$PCA$sdev)
+plot.PCA(oDiag.3, fBatch)
+mPC = oDiag.3@lData$PCA$x[,1:3]
 
 ## try a linear mixed effect model to account for varince
 library(lme4)
@@ -331,63 +429,63 @@ apply(mDraws.sim, 2, function(x) {
 # mean(mCoef[,7])
 # ##########################################
 
-m = cbind(extract(fit.stan.4)$sigmaRan, extract(fit.stan.4)$sigmaPop) 
-dim(m)
-m = log(m)
-colnames(m) = c('Treatment', 'Genotype', 'TrGt', 'TechnicalRep', 'Residual')
-pairs(m, pch=20, cex=0.5, col='grey')
-
-df = stack(data.frame(m[,-5]))
-histogram(~ values | ind, data=df, xlab='Log SD', scales=list(relation='free'))
-
-## calculate bayesian p-value for this test statistic
-getPValue = function(Trep, Tobs){
-  left = sum(Trep <= Tobs)/length(Trep)
-  right = sum(Trep >= Tobs)/length(Trep)
-  return(min(left, right))
-}
-## define some test quantities to measure the lack of fit
-## define a test quantity T(y, theta)
-## variance
-T1_var = function(Y) return(var(Y))
-
-## min quantity
-T1_min = function(Y){
-  return(min(Y))
-} 
-
-## max quantity
-T1_max = function(Y){
-  return(max(Y))
-} 
-
-## mean quantity
-T1_mean = function(Y){
-  return(mean(Y))
-} 
-
-## mChecks
-ivResp = dfData$values
-mChecks = matrix(NA, nrow=4, ncol=1)
-rownames(mChecks) = c('Variance', 'Max', 'Min', 'Mean')
-colnames(mChecks) = c('model 1')
-
-t1 = apply(mDraws.sim, 2, T1_var)
-mChecks['Variance', 1] = getPValue(t1, var(ivResp))
-
-## testing for outlier detection i.e. the minimum value show in the histograms earlier
-t1 = apply(mDraws.sim, 2, T1_min)
-t2 = T1_min(ivResp)
-mChecks['Min',1] = getPValue(t1, t2)
-
-## maximum value
-t1 = apply(mDraws.sim, 2, T1_max)
-t2 = T1_max(ivResp)
-mChecks['Max', 1] = getPValue(t1, t2)
-
-## mean value
-t1 = apply(mDraws.sim, 2, T1_mean)
-t2 = T1_mean(ivResp)
-mChecks['Mean', 1] = getPValue(t1, t2)
-
-mChecks
+# m = cbind(extract(fit.stan.4)$sigmaRan, extract(fit.stan.4)$sigmaPop) 
+# dim(m)
+# m = log(m)
+# colnames(m) = c('Treatment', 'Genotype', 'TrGt', 'TechnicalRep', 'Residual')
+# pairs(m, pch=20, cex=0.5, col='grey')
+# 
+# df = stack(data.frame(m[,-5]))
+# histogram(~ values | ind, data=df, xlab='Log SD', scales=list(relation='free'))
+# 
+# ## calculate bayesian p-value for this test statistic
+# getPValue = function(Trep, Tobs){
+#   left = sum(Trep <= Tobs)/length(Trep)
+#   right = sum(Trep >= Tobs)/length(Trep)
+#   return(min(left, right))
+# }
+# ## define some test quantities to measure the lack of fit
+# ## define a test quantity T(y, theta)
+# ## variance
+# T1_var = function(Y) return(var(Y))
+# 
+# ## min quantity
+# T1_min = function(Y){
+#   return(min(Y))
+# } 
+# 
+# ## max quantity
+# T1_max = function(Y){
+#   return(max(Y))
+# } 
+# 
+# ## mean quantity
+# T1_mean = function(Y){
+#   return(mean(Y))
+# } 
+# 
+# ## mChecks
+# ivResp = dfData$values
+# mChecks = matrix(NA, nrow=4, ncol=1)
+# rownames(mChecks) = c('Variance', 'Max', 'Min', 'Mean')
+# colnames(mChecks) = c('model 1')
+# 
+# t1 = apply(mDraws.sim, 2, T1_var)
+# mChecks['Variance', 1] = getPValue(t1, var(ivResp))
+# 
+# ## testing for outlier detection i.e. the minimum value show in the histograms earlier
+# t1 = apply(mDraws.sim, 2, T1_min)
+# t2 = T1_min(ivResp)
+# mChecks['Min',1] = getPValue(t1, t2)
+# 
+# ## maximum value
+# t1 = apply(mDraws.sim, 2, T1_max)
+# t2 = T1_max(ivResp)
+# mChecks['Max', 1] = getPValue(t1, t2)
+# 
+# ## mean value
+# t1 = apply(mDraws.sim, 2, T1_mean)
+# t2 = T1_mean(ivResp)
+# mChecks['Mean', 1] = getPValue(t1, t2)
+# 
+# mChecks

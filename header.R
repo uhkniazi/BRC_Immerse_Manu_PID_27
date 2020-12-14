@@ -86,3 +86,20 @@ plot.ercc.MD = function(mLogCounts, fGroupings, ...){
   lines(lowess(rowMeans(mLogCounts)[-i], d[-i]), col='black')
   lines(lowess(rowMeans(mLogCounts)[i], d[i]), col='blue')
 }
+
+plot.erccAbsent.MD = function(mLogCounts, fGroupings, ...){
+  if (nlevels(fGroupings) != 2) stop('grouping factor should be 2 levels only')
+  mResults = apply(mLogCounts, 1, function(x){
+    tapply(x, fGroupings, mean)
+  })
+  mResults = t(mResults)
+  ## difference
+  d = mResults[,2] - mResults[,1]
+  ## choose colour
+  c = rep('grey', length.out=length(d))
+  plot(rowMeans(mLogCounts), d, pch=20, col=c, xlab='mean log(count+1)', 
+       ylab='log difference', ...)
+  abline(h = 0, lty=2)
+  lines(lowess(rowMeans(mLogCounts), d), col='black')
+}
+
