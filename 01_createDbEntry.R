@@ -6,7 +6,7 @@
 
 ## set variables and source libraries
 source('header.R')
-
+setwd('dataID50/')
 ## connect to mysql database 
 library('RMySQL')
 
@@ -21,6 +21,7 @@ cSampleCol = dbGetQuery(db, paste('describe Sample;'))$Field[-1]
 dbGetQuery(db, paste('describe File;'))
 cFileCol = dbGetQuery(db, paste('describe File;'))$Field[-1]
 
+setwd(gcswd)
 setwd('dataExternal/remote/raw/')
 
 # list the files
@@ -32,14 +33,16 @@ fSplit = gsub('_R[1|2]_.+', '', cvFiles)
 lFiles = split(cvFiles, fSplit)
 
 setwd(gcswd)
+setwd('dataID50/')
 ## load the metadata file
-dfMeta = read.csv('dataExternal/cardiac_metadata_RNA.csv', header=T,
-                  stringsAsFactors = F, row.names = 1)
+dfMeta = read.csv('dataExternal/METADATA_CARDIAC_VS_VACIRISS.csv', header=T,
+                  stringsAsFactors = F)
 str(dfMeta)
 cn = colnames(dfMeta)
 # remove any white space
 for (i in seq_along(1:ncol(dfMeta))) dfMeta[,cn[i]] = gsub(' ', '', dfMeta[,cn[i]])
 dim(dfMeta)
+dfMeta = na.omit(dfMeta)
 # sanity check
 table(dfMeta$Sample_ID %in% names(lFiles))
 table(names(lFiles) %in% dfMeta$Sample_ID)
@@ -49,25 +52,22 @@ lFiles = lFiles[f]
 table(names(lFiles) %in% dfMeta$Sample_ID)
 # order the files list and table in same sequence
 identical(names(lFiles), dfMeta$Sample_ID)
-
+fTreatment = rep('CT0', time=nrow(dfMeta))
+fTreatment[grep('^T0', dfMeta$Sample_ID)] = 'SepT0'
+dfMeta$fTreatment = fTreatment
 ## structure of the data and covariates
 str(dfMeta)
-xtabs( ~ Timepoint + study_id, data=dfMeta)
-xtabs( ~ Timepoint + outcome_icu_survival, data=dfMeta)
-xtabs( ~ Timepoint + RNA_extraction_run_num, data=dfMeta)
+xtabs( ~ fTreatment + RNA_extraction_date, data=dfMeta)
+xtabs( ~ fTreatment + RNA_extraction_run_num, data=dfMeta)
 
 ## create the entry for samples
 cSampleCol
 
 dfSamples = data.frame(idProject=g_pid, idData=g_did, title=dfMeta$Sample_ID,
                        location='rosalind scratch and a copy with manu',
-                       description= paste('age', dfMeta$age_years,
-                                          'height', dfMeta$height_cms,
-                                          'sex', dfMeta$sex,
-                                          'group1 is Time point',
-                                          'group2 is Lane',
+                       description= paste('group1 is Treatment variable',
                                           sep=';'),
-                       group1 = dfMeta$Timepoint,
+                       group1 = dfMeta$fTreatment,
                        group2= 0,
                        group3=0)
 # write this data to the database
@@ -78,7 +78,7 @@ rownames(dfSamples) = NULL
 #dbWriteTable(db, name='Sample', value=dfSamples, append=T, row.names=F)
 # get this table again from database with ids added
 g_did
-dfSamples = dbGetQuery(db, paste('select * from Sample where Sample.idData = 49;'))
+dfSamples = dbGetQuery(db, paste('select * from Sample where Sample.idData = 50;'))
 
 # create entries for these files in the database
 dbListTables(db)
