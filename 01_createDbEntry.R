@@ -1,7 +1,7 @@
 # File: 01_createDbEntry.R
 # Auth: umar.niazi@kcl.ac.uk
 # DESC: list the samples and create appropriate db entries
-# Date: 7/9/2020
+# Date: 5/2/2021
 
 
 ## set variables and source libraries
