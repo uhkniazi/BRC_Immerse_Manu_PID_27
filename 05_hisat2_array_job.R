@@ -1,7 +1,7 @@
 # File: 05_hisat2_array_job.R
 # Auth: umar.niazi@kcl.as.uk
 # DESC: create a parameter file and shell script to run array job on hpc
-# Date: 5/2/2021
+# Date: 12/3/2021
 
 
 ## set variables and source libraries
@@ -17,7 +17,7 @@ dbListTables(db)
 # check how many files each sample has
 g_did
 q = paste0('select count(File.idSample) as files, Sample.idData, Sample.title, Sample.id as SampleID , Sample.group1 as g1 from File, Sample
-           where (Sample.idData = 50 and File.idSample = Sample.id) group by File.idSample')
+           where (Sample.idData = 51 and File.idSample = Sample.id) group by File.idSample')
 dfQuery = dbGetQuery(db, q)
 dfQuery$title = gsub(" ", "", dfQuery$title, fixed = T)
 dim(dfQuery)
@@ -26,7 +26,7 @@ dfQuery
 
 # get the count of files
 q = paste0('select File.*, Sample.idData, Sample.group1 as g1 from File, Sample 
-           where (Sample.idData = 50) and (File.idSample = Sample.id) ')
+           where (Sample.idData = 51) and (File.idSample = Sample.id) ')
 dfCounts = dbGetQuery(db, q)
 dfCounts$name = gsub(" ", "", dfCounts$name, fixed = T)
 head(dfCounts)
@@ -35,7 +35,7 @@ dim(dfCounts)
 
 # for each sample id, get the corresponding files
 cvQueries = paste0('select File.*, Sample.title from File, Sample 
-                   where (Sample.idData = 50 and Sample.id =', dfQuery$SampleID, ') and (File.idSample = Sample.id) ')
+                   where (Sample.idData = 51 and Sample.id =', dfQuery$SampleID, ') and (File.idSample = Sample.id) ')
 
 # set header variables 
 cvShell = '#!/bin/bash -l'
@@ -56,7 +56,7 @@ cvMail = '#SBATCH --mail-type=END,FAIL'
 # set array job loop
 length(cvQueries)
 dim(dfCounts)
-cvArrayJob = '#SBATCH --array=1-56'
+cvArrayJob = '#SBATCH --array=1-33'
 
 # set the directory names
 cvInput = 'input/'
