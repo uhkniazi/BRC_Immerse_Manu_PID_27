@@ -6,7 +6,7 @@
 
 ## variables
 g_pid = 27
-g_did = 50
+g_did = 51
 gcswd = getwd()
 gcRemoteDir = "/run/user/1000/gvfs/sftp:host=login.rosalind.kcl.ac.uk,user=k1625253/users/k1625253/scratch/old-scratch_rosalind-legacy-import_2020-01-28/Data/ProjectsData/BRC_Immerse_Manu_PID_27"
 
