@@ -1,7 +1,7 @@
 # File: 08_counts_from_bams.R
 # Auth: umar.niazi@kcl.ac.uk
 # DESC: generate count tables for transcripts from bam files
-# Date: 9/2/2021
+# Date: 15/3/2021
 
 
 ## set variables and source libraries
@@ -37,7 +37,7 @@ dbListFields(db, 'File')
 # get the query
 g_did
 q = paste0('select Sample.id as sid, Sample.group1, Sample.group2, Sample.title, File.* from Sample, File
-           where (Sample.idData = 50) AND (File.idSample = Sample.id AND File.type like "%duplicates removed%")')
+           where (Sample.idData = 51) AND (File.idSample = Sample.id AND File.type like "%duplicates removed%")')
 dfSample = dbGetQuery(db, q)
 nrow(dfSample)
 dfSample
@@ -51,7 +51,7 @@ dfSample$group1 = gsub(" ", "", dfSample$group1, fixed = T)
 dfSample$fp = paste0(dfSample$name)
 
 #### set working directory to appropriate location with bam files
-setwd('dataExternal/remote/dataID50/Aligned/')
+setwd('dataExternal/remote/dataID51/Aligned/')
 csFiles = list.files('.', pattern = '*.bam$', recursive = F)
 # check if these files match the file names in database
 table(dfSample$fp %in% csFiles)
@@ -77,7 +77,7 @@ names(lCounts) = dfSample$sid
 
 ## save the summarized experiment object
 setwd(gcswd)
-n = make.names(paste('lCounts rd did 50 manu reverse from bams rds'))
+n = make.names(paste('lCounts rd did 51 manu reverse from bams rds'))
 n2 = paste0('~/Data/MetaData/', n)
 save(lCounts, file=n2)
 
@@ -87,6 +87,6 @@ db = dbConnect(MySQL(), user='rstudio', password='12345', dbname='Projects', hos
 dbListTables(db)
 dbListFields(db, 'MetaFile')
 df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/',
-                comment='list of gene Count matrix from manu VACIRiSS project quality 10 and duplicates removed and strands reversed')
+                comment='list of gene Count matrix for B and T cells for manu VACIRiSS project quality 10 and duplicates removed and strands reversed')
 # dbWriteTable(db, name = 'MetaFile', value=df, append=T, row.names=F)
 dbDisconnect(db)
