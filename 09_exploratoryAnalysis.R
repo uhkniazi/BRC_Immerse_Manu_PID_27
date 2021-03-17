@@ -1,7 +1,7 @@
 # File: 09_exploratoryAnalysis.R
 # Auth: umar.niazi@kcl.ac.uk
 # DESC: quality checks on the count matrix with covariates
-# Date: 9/2/2021
+# Date: 15/3/2021
 
 source('header.R')
 
@@ -14,14 +14,14 @@ dbListTables(db)
 # get the query
 g_did
 q = paste0('select MetaFile.* from MetaFile
-           where (MetaFile.idData = 50) AND (MetaFile.comment like "%count%")')
+           where (MetaFile.idData = 51) AND (MetaFile.comment like "%count%")')
 dfSample = dbGetQuery(db, q)
 dfSample
 n = paste0(dfSample$location, dfSample$name)
 load(n[1])
 
 ## load the metadata i.e. covariates
-q = paste0('select Sample.* from Sample where Sample.idData = 50')
+q = paste0('select Sample.* from Sample where Sample.idData = 51')
 dfSample = dbGetQuery(db, q)
 dim(dfSample)
 dfSample = na.omit(dfSample)
@@ -58,7 +58,7 @@ str(dfSample)
 dfSample$description[1]
 #d = strsplit(d, ';')
 #fBatch = factor(sapply(d, function(x) x[2]))
-fTreatment = factor(dfSample$group1)
+fTreatment = factor(dfSample$group2)
 nlevels(fTreatment)
 # choose appropriate factor
 fBatch = factor(fTreatment)
@@ -94,6 +94,8 @@ table(i2)
 
 table(names(i[i < 3]) %in% names(i2[!i2]))
 
+## erccs have not accumulated any reads
+## were different ercc's used?
 mErcc = mErcc[!(i < 3), ]
 dim(mErcc)
 
@@ -101,10 +103,10 @@ dim(mErcc)
 i = rowMeans(mData)
 table( i < 3)
 # FALSE  TRUE 
-# 15665 11530 
+# 13216 13979  
 mData = mData[!(i< 3),]
 dim(mData)
-# [1] 15665    56
+# [1] 13216    33
 
 ivProb = apply(mData, 1, function(inData) {
   inData[is.na(inData) | !is.finite(inData)] = 0
@@ -116,23 +118,25 @@ ivProb = apply(mData, 1, function(inData) {
 hist(ivProb)
 
 #### check ercc quality
-fTreatment = factor(dfSample$group1)
+fTreatment = factor(dfSample$group2):factor(dfSample$group3)
 nlevels(fTreatment)
 
 plot.ercc.proportions(colSums(rbind(mData, mErcc)), colSums(mErcc),
                       fTreatment, main='Treatment', las=2)
 
+levels(fTreatment)
+table(fTreatment)
 ## prepare input data and select groupings
 par(mfrow=c(2,3))
 for (i in 1:6){
   m = log(rbind(mData, mErcc)+1)
   head(m)
   colnames(m) = as.character(fTreatment)
-  m = m[,colnames(m) == 'SepT0']
-  m = m[,sample(1:ncol(m), size = 10, replace = F)]
-  f = gl(2, k = 5, labels = c('1', '2'))
+  m = m[,colnames(m) == 'SC_T3:T']
+  m = m[,sample(1:ncol(m), size = 6, replace = F)]
+  f = gl(2, k = 3, labels = c('1', '2'))
   levels(f)
-  plot.ercc.MD(m, f, main='MD plot - SepT0 vs SepT0', ylim=c(-1.5, 1.5))
+  plot.ercc.MD(m, f, main='MD plot - SC_T3:T', ylim=c(-1.5, 1.5))
 }
 
 par(mfrow=c(2,3))
@@ -140,35 +144,32 @@ for (i in 1:6){
   m = log(rbind(mData, mErcc)+1)
   head(m)
   colnames(m) = as.character(fTreatment)
-  m = m[,colnames(m) == 'CT0']
-  m = m[,sample(1:ncol(m), size = 10, replace = F)]
-  f = gl(2, k = 5, labels = c('1', '2'))
+  m = m[,colnames(m) == 'SC_T0:T']
+  m = m[,sample(1:ncol(m), size = 6, replace = F)]
+  f = gl(2, k = 3, labels = c('1', '2'))
   levels(f)
-  plot.ercc.MD(m, f, main='MD plot - CT0 vs CT0', ylim=c(-1.5, 1.5))
+  plot.ercc.MD(m, f, main='MD plot - SC_T0:T', ylim=c(-1.5, 1.5))
 }
 
-par(mfrow=c(1,1))
-m = log(rbind(mData, mErcc)+1)
-head(m)
-colnames(m) = as.character(fTreatment)
-plot.ercc.MD(m, fTreatment, main='MD plot - SepT0 vs CT0 (raw)', ylim=c(-1.5, 1.5))
+## do not use ERCCs as they don't accumulate any reads
+dim(mData)
+table(grepl('ercc', rownames(mData), ignore.case = T))
 
 library(DESeq2)
 sf = estimateSizeFactorsForMatrix(mData)
 mData.norm = sweep(mData, 2, sf, '/')
-
-mData.ercc = rbind(mData, mErcc)
-sf.s = estimateSizeFactorsForMatrix(mData.ercc, controlGenes = grep('ercc', rownames(mData.ercc), ignore.case = T))
-mData.norm.2 = sweep(mData.ercc, 2, sf.s, '/')
+# 
+# mData.ercc = rbind(mData, mErcc)
+# sf.s = estimateSizeFactorsForMatrix(mData.ercc, controlGenes = grep('ercc', rownames(mData.ercc), ignore.case = T))
+# mData.norm.2 = sweep(mData.ercc, 2, sf.s, '/')
 
 identical(colnames(mData.norm), as.character(dfSample$id))
-identical(colnames(mData.norm.2), as.character(dfSample$id))
+# identical(colnames(mData.norm.2), as.character(dfSample$id))
 
-plot(sf, sf.s)
+# plot(sf, sf.s)
 
-## compare the normalised data 
+## plot the normalised data
 oDiag.2 = CDiagnosticPlots(log(mData.norm+0.5), 'Normalised 1')
-oDiag.3 = CDiagnosticPlots(log(mData.norm.2+0.5), 'Normalised ercc')
 
 ## change parameters 
 l = CDiagnosticPlotsGetParameters(oDiag.2)
@@ -176,92 +177,55 @@ l$PCA.jitter = F
 l$HC.jitter = F
 
 oDiag.2 = CDiagnosticPlotsSetParameters(oDiag.2, l)
-oDiag.3 = CDiagnosticPlotsSetParameters(oDiag.3, l)
 
 # the batch variable we wish to colour by, 
-fBatch = fTreatment
+fBatch = factor(dfSample$group3)
 levels(fBatch)
-## compare the 2 methods using various plots
-par(mfrow=c(1,2))
+# ## compare the 2 methods using various plots
+par(p.old)
 boxplot.median.summary(oDiag.2, fBatch, legend.pos = 'topright', axis.label.cex = 0.5)
-boxplot.median.summary(oDiag.3, fBatch, legend.pos = 'topright', axis.label.cex = 0.5)
 
 plot.mean.summary(oDiag.2, fBatch, axis.label.cex = 1)
-plot.mean.summary(oDiag.3, fBatch, axis.label.cex = 1)
 
 plot.sigma.summary(oDiag.2, fBatch, axis.label.cex = 0.5)
-plot.sigma.summary(oDiag.3, fBatch, axis.label.cex = 0.5)
 
 plot.missing.summary(oDiag.2, fBatch, axis.label.cex = 0.5, cex.main=1)
-plot.missing.summary(oDiag.3, fBatch, axis.label.cex = 0.5, cex.main=1)
 
 plot.PCA(oDiag.2, fBatch, cex=1, csLabels = as.character(dfSample$title), legend.pos = 'topleft')
-plot.PCA(oDiag.3, fBatch, cex=1, legend.pos = 'topright', csLabels = as.character(dfSample$title))
 plot.dendogram(oDiag.2, fBatch, labels_cex = 1)
-plot.dendogram(oDiag.3, fBatch, labels_cex = 1)
 
-par(mfrow=c(2,2))
-m = log(rbind(mData, mErcc)+1)
-head(m)
-plot.ercc.MD(m, fTreatment, main='MD plot - Sep vs Car (raw)', ylim=c(-1.5, 1.5))
+### plot subsets of the data i.e. T and B cells
+i = dfSample$group3 == 'T'
+oDiag.2 = CDiagnosticPlots(log(mData.norm[,i]+0.5), 'T cells')
 
-m = log(mData.norm+1)
-plot.erccAbsent.MD(m, fTreatment, main='Global normalisation - Sep vs Car', ylim=c(-1.5, 1.5))
-m = log(mData.norm.2+1)
-plot.ercc.MD(m, fTreatment, main='ERCC normalisation - Sep vs Car', ylim=c(-1.5, 1.5))
+## change parameters 
+l = CDiagnosticPlotsGetParameters(oDiag.2)
+l$PCA.jitter = F
+l$HC.jitter = F
 
-m1 = log(mData.norm+1)
-m = t(apply(m1, 1, function(x){
-  return(tapply(x, fTreatment, mean))
-}))
-d1 = m[,2] - m[,1] 
+oDiag.2 = CDiagnosticPlotsSetParameters(oDiag.2, l)
 
-m2 = log(mData.norm.2+1)
-m = t(apply(m2, 1, function(x){
-  return(tapply(x, fTreatment, mean))
-}))
-d2 = m[,2] - m[,1] 
-i = grep('ercc', names(d2), ignore.case = T)
-d2 = d2[-i]
-m2 = m2[-i,]
-plot(d1, d2)
-
-hist(d2 - d1)
-
-par(mfrow=c(1,1))
-plot(lowess(rowMeans(m1), d1), type='l')
-plot(lowess(rowMeans(m2), d2), type='l')
-
-plot(lowess(rowMeans(m1), d1), type='l', ylim=c(-0.3, 0.9), xlab="mean log(count+1)",
-     ylab='log difference', main='Lowess Curve trends')
-lines(lowess(rowMeans(m2), d2), lty=2)
-abline(h = 0, lty=3, cex=0.5)
-legend('topleft', legend = c('Global', 'Ercc'), lty=c(1,2))
-
-####### plots within the same group
-par(mfrow=c(2,2))
-for (i in 1:6){
-  m = log(rbind(mData.norm)+1)
-  head(m)
-  colnames(m) = as.character(fTreatment)
-  m = m[,colnames(m) == 'SepT0']
-  i = sample(1:ncol(m), size = 10, replace = F)
-  m = m[,i]
-  f = gl(2, k = 5, labels = c('1', '2'))
-  levels(f)
-  plot.erccAbsent.MD(m, f, main='MD plot - Sep vs Sep', ylim=c(-1.5, 1.5))
-  m2 = log(mData.norm.2+1)
-  plot.ercc.MD(m2[,i], f, main='MD plot - Sep vs Sep', ylim=c(-1.5, 1.5))
-}
-
-## import the ERCC mix data from sequencing lab
-## data not available
+# the batch variable we wish to colour by, 
+fBatch = factor(dfSample$group2[i])
+levels(fBatch)
+plot.PCA(oDiag.2, fBatch, cex=1, csLabels = as.character(dfSample$group1[i]), legend.pos = 'bottomleft')
+plot.dendogram(oDiag.2, fBatch, labels_cex = 1)
 
 ######## modelling of PCA components to assign sources of variance to covariates in the design
 par(mfrow=c(1,1))
-plot(oDiag.3@lData$PCA$sdev)
-plot.PCA(oDiag.3, fBatch)
-mPC = oDiag.3@lData$PCA$x[,1:3]
+oDiag.2 = CDiagnosticPlots(log(mData.norm+0.5), 'Normalised 1')
+## change parameters 
+l = CDiagnosticPlotsGetParameters(oDiag.2)
+l$PCA.jitter = F
+l$HC.jitter = F
+oDiag.2 = CDiagnosticPlotsSetParameters(oDiag.2, l)
+
+# the batch variable we wish to colour by, 
+fBatch = factor(dfSample$group3)
+levels(fBatch)
+plot(oDiag.2@lData$PCA$sdev)
+plot.PCA(oDiag.2, fBatch)
+mPC = oDiag.2@lData$PCA$x[,1:3]
 
 ## try a linear mixed effect model to account for varince
 library(lme4)
@@ -274,18 +238,23 @@ densityplot(~ values, data=dfData)
 densityplot(~ values | ind, data=dfData, scales=list(relation='free'))
 
 str(dfSample)
+fTreatment = factor(dfSample$group2):factor(dfSample$group3)
+levels(fTreatment)
+fPid = factor(dfSample$group1)
 dfData$fTreatment = fTreatment
-# dfData$fPid = fPid
+dfData$fPid = fPid
+dfData$cells = factor(dfSample$group3)
+str(dfData)
 
 densityplot(~ values | ind, groups=fTreatment, data=dfData, auto.key = list(columns=2), scales=list(relation='free'))
-xyplot(values ~ fTreatment | ind, data=dfData, type=c('p', 'r'), scales=list(relation='free'))
+xyplot(values ~ fTreatment | ind, groups=cells,  data=dfData, type=c('p', 'r'), scales=list(relation='free'))
 # format data for modelling
 dfData$Coef.1 = factor(dfData$fTreatment:dfData$ind)
-#dfData$Coef.2 = factor(dfData$fPid:dfData$ind)
+dfData$Coef.2 = factor(dfData$fPid:dfData$ind)
 str(dfData)
 
 fit.lme1 = lmer(values ~ 1  + (1 | Coef.1), data=dfData)
-#fit.lme2 = lmer(values ~ 1  + (1 | Coef.1) + (1 | Coef.2), data=dfData)
+fit.lme2 = lmer(values ~ 1  + (1 | Coef.1) + (1 | Coef.2), data=dfData)
 
 #anova(fit.lme1, fit.lme2)
 
