@@ -67,7 +67,7 @@ lFiles = split(dfSample$fp, dfSample$sid)
 lCounts = lapply(lFiles, function(bfl){
   ## create a bamfiles list object
   oBamFiles = BamFileList(bfl, index=paste0(bfl, '.bai'))
-  return(assays(summarizeOverlaps(oGRLgenes, oBamFiles, ignore.strand = F, singleEnd=F, preprocess.reads=invertStrand))$counts)
+  return(assays(summarizeOverlaps(oGRLgenes, oBamFiles, ignore.strand = T, singleEnd=F))$counts)
 })
 
 # sanity checks
@@ -77,7 +77,7 @@ names(lCounts) = dfSample$sid
 
 ## save the summarized experiment object
 setwd(gcswd)
-n = make.names(paste('lCounts rd did 51 manu reverse from bams rds'))
+n = make.names(paste('lCounts rd did 51 manu unstranded from rmdup bams rds'))
 n2 = paste0('~/Data/MetaData/', n)
 save(lCounts, file=n2)
 
@@ -87,6 +87,6 @@ db = dbConnect(MySQL(), user='rstudio', password='12345', dbname='Projects', hos
 dbListTables(db)
 dbListFields(db, 'MetaFile')
 df = data.frame(idData=g_did, name=n, type='rds', location='~/Data/MetaData/',
-                comment='list of gene Count matrix for B and T cells for manu VACIRiSS project quality 10 and duplicates removed and strands reversed')
+                comment='list of gene Count matrix for B and T cells for manu VACIRiSS project quality 10 and duplicates removed and unstranded counts')
 # dbWriteTable(db, name = 'MetaFile', value=df, append=T, row.names=F)
 dbDisconnect(db)
