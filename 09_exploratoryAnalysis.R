@@ -18,7 +18,7 @@ q = paste0('select MetaFile.* from MetaFile
 dfSample = dbGetQuery(db, q)
 dfSample
 n = paste0(dfSample$location, dfSample$name)
-load(n[1])
+load(n[2])
 
 ## load the metadata i.e. covariates
 q = paste0('select Sample.* from Sample where Sample.idData = 51')
@@ -96,17 +96,17 @@ table(names(i[i < 3]) %in% names(i2[!i2]))
 
 ## erccs have not accumulated any reads
 ## were different ercc's used?
-mErcc = mErcc[!(i < 3), ]
+# mErcc = mErcc[!(i < 3), ]
 dim(mErcc)
 
 # drop the rows where average across rows is less than 3
 i = rowMeans(mData)
 table( i < 3)
 # FALSE  TRUE 
-# 13216 13979  
+# 13970 13225  
 mData = mData[!(i< 3),]
 dim(mData)
-# [1] 13216    33
+# [1] 13970    33
 
 ivProb = apply(mData, 1, function(inData) {
   inData[is.na(inData) | !is.finite(inData)] = 0
@@ -124,33 +124,33 @@ nlevels(fTreatment)
 plot.ercc.proportions(colSums(rbind(mData, mErcc)), colSums(mErcc),
                       fTreatment, main='Treatment', las=2)
 
-levels(fTreatment)
-table(fTreatment)
-## prepare input data and select groupings
-par(mfrow=c(2,3))
-for (i in 1:6){
-  m = log(rbind(mData, mErcc)+1)
-  head(m)
-  colnames(m) = as.character(fTreatment)
-  m = m[,colnames(m) == 'SC_T3:T']
-  m = m[,sample(1:ncol(m), size = 6, replace = F)]
-  f = gl(2, k = 3, labels = c('1', '2'))
-  levels(f)
-  plot.ercc.MD(m, f, main='MD plot - SC_T3:T', ylim=c(-1.5, 1.5))
-}
-
-par(mfrow=c(2,3))
-for (i in 1:6){
-  m = log(rbind(mData, mErcc)+1)
-  head(m)
-  colnames(m) = as.character(fTreatment)
-  m = m[,colnames(m) == 'SC_T0:T']
-  m = m[,sample(1:ncol(m), size = 6, replace = F)]
-  f = gl(2, k = 3, labels = c('1', '2'))
-  levels(f)
-  plot.ercc.MD(m, f, main='MD plot - SC_T0:T', ylim=c(-1.5, 1.5))
-}
-
+# levels(fTreatment)
+# table(fTreatment)
+# ## prepare input data and select groupings
+# par(mfrow=c(2,3))
+# for (i in 1:6){
+#   m = log(rbind(mData, mErcc)+1)
+#   head(m)
+#   colnames(m) = as.character(fTreatment)
+#   m = m[,colnames(m) == 'SC_T3:T']
+#   m = m[,sample(1:ncol(m), size = 6, replace = F)]
+#   f = gl(2, k = 3, labels = c('1', '2'))
+#   levels(f)
+#   plot.ercc.MD(m, f, main='MD plot - SC_T3:T', ylim=c(-1.5, 1.5))
+# }
+# 
+# par(mfrow=c(2,3))
+# for (i in 1:6){
+#   m = log(rbind(mData, mErcc)+1)
+#   head(m)
+#   colnames(m) = as.character(fTreatment)
+#   m = m[,colnames(m) == 'SC_T0:T']
+#   m = m[,sample(1:ncol(m), size = 6, replace = F)]
+#   f = gl(2, k = 3, labels = c('1', '2'))
+#   levels(f)
+#   plot.ercc.MD(m, f, main='MD plot - SC_T0:T', ylim=c(-1.5, 1.5))
+# }
+# 
 ## do not use ERCCs as they don't accumulate any reads
 dim(mData)
 table(grepl('ercc', rownames(mData), ignore.case = T))
@@ -195,8 +195,8 @@ plot.PCA(oDiag.2, fBatch, cex=1, csLabels = as.character(dfSample$title), legend
 plot.dendogram(oDiag.2, fBatch, labels_cex = 1)
 
 ### plot subsets of the data i.e. T and B cells
-i = dfSample$group3 == 'T'
-oDiag.2 = CDiagnosticPlots(log(mData.norm[,i]+0.5), 'T cells')
+i = dfSample$group3 == 'B'
+oDiag.2 = CDiagnosticPlots(log(mData.norm[,i]+0.5), 'B cells')
 
 ## change parameters 
 l = CDiagnosticPlotsGetParameters(oDiag.2)
@@ -241,6 +241,7 @@ str(dfSample)
 fTreatment = factor(dfSample$group2):factor(dfSample$group3)
 levels(fTreatment)
 fPid = factor(dfSample$group1)
+table(fTreatment, fPid)
 dfData$fTreatment = fTreatment
 dfData$fPid = fPid
 dfData$cells = factor(dfSample$group3)
@@ -256,7 +257,7 @@ str(dfData)
 fit.lme1 = lmer(values ~ 1  + (1 | Coef.1), data=dfData)
 fit.lme2 = lmer(values ~ 1  + (1 | Coef.1) + (1 | Coef.2), data=dfData)
 
-#anova(fit.lme1, fit.lme2)
+anova(fit.lme1, fit.lme2)
 
 summary(fit.lme1)
 plot((fitted(fit.lme1)), resid(fit.lme1), pch=20, cex=0.7)
@@ -275,12 +276,12 @@ stanDso = rstan::stan_model(file='tResponsePartialPooling.stan')
 ######## models of 3 sizes using stan
 str(dfData)
 m1 = model.matrix(values ~ Coef.1 - 1, data=dfData)
-# m2 = model.matrix(values ~ Coef.2 - 1, data=dfData)
-m = cbind(m1)
+m2 = model.matrix(values ~ Coef.2 - 1, data=dfData)
+m = cbind(m1, m2)
 
 lStanData = list(Ntotal=nrow(dfData), Ncol=ncol(m), X=m,
-                 NscaleBatches=1, NBatchMap=c(rep(1, times=nlevels(dfData$Coef.1))),
-                                              #rep(2, times=nlevels(dfData$Coef.2))),
+                 NscaleBatches=2, NBatchMap=c(rep(1, times=nlevels(dfData$Coef.1)),
+                                              rep(2, times=nlevels(dfData$Coef.2))),
                  y=dfData$values)
 
 fit.stan.2 = sampling(stanDso, data=lStanData, iter=1000, chains=2, pars=c('betas', 'populationMean', 'sigmaPop', 'sigmaRan',
@@ -292,22 +293,22 @@ traceplot(fit.stan.2, 'populationMean')
 traceplot(fit.stan.2, 'sigmaPop')
 traceplot(fit.stan.2, 'sigmaRan')
 
-# ## just using the one covariate
-# m = model.matrix(values ~ Coef.1 - 1, data=dfData)
-# 
-# lStanData = list(Ntotal=nrow(dfData), Ncol=ncol(m), X=m,
-#                  NscaleBatches=1, NBatchMap=c(rep(1, times=nlevels(dfData$Coef.1))),
-#                  y=dfData$values)
-# 
-# fit.stan.1 = sampling(stanDso, data=lStanData, iter=1000, chains=2, pars=c('betas', 'populationMean', 'sigmaPop', 'sigmaRan',
-#                                                                            'nu', 'mu', 'log_lik'),
-#                       cores=2)
-# print(fit.stan.1, c('populationMean', 'sigmaPop', 'sigmaRan', 'nu', 'betas'), digits=3)
-# 
-# 
-# ## some model scores and comparisons
-# compare(fit.stan.2, fit.stan.1)
-# plot(compare(fit.stan.2, fit.stan.1))
+## just using the one covariate
+m = model.matrix(values ~ Coef.1 - 1, data=dfData)
+
+lStanData = list(Ntotal=nrow(dfData), Ncol=ncol(m), X=m,
+                 NscaleBatches=1, NBatchMap=c(rep(1, times=nlevels(dfData$Coef.1))),
+                 y=dfData$values)
+
+fit.stan.1 = sampling(stanDso, data=lStanData, iter=1000, chains=2, pars=c('betas', 'populationMean', 'sigmaPop', 'sigmaRan',
+                                                                           'nu', 'mu', 'log_lik'),
+                      cores=2)
+print(fit.stan.1, c('populationMean', 'sigmaPop', 'sigmaRan', 'nu', 'betas'), digits=3)
+
+
+## some model scores and comparisons
+compare(fit.stan.2, fit.stan.1)
+plot(compare(fit.stan.2, fit.stan.1))
 
 # plot(LOOPk(fit.stan.2) ~ WAIC(fit.stan.2, pointwise = T))
 
@@ -331,7 +332,7 @@ simulateOne = function(mu, sigma, nu){
 
 ## sample n values, 1000 times
 mDraws.sim = matrix(NA, nrow = nrow(dfData), ncol=300)
-l = extract(fit.stan.2)
+l = extract(fit.stan.1)
 for (i in 1:300){
   p = sample(1:nrow(l$mu), 1)
   mDraws.sim[,i] = simulateOne(l$mu[p,], 
@@ -353,18 +354,19 @@ apply(l$mu[sample(1:nrow(l$mu), 100),], 1, function(x) {
 
 ## plot the original PCA and replicated data
 plot(dfData$values[dfData$ind == 'PC1'], dfData$values[dfData$ind == 'PC2'], 
-     col=c(1,2)[as.numeric(dfData$fTreatment[dfData$ind == 'PC1'])], main='PCA Components - original and simulated',
+     col=c(1:nlevels(dfData$fTreatment))[as.numeric(dfData$fTreatment[dfData$ind == 'PC1'])], main='PCA Components - original and simulated M1',
      xlab='PC1', ylab='PC2')
 points(rowMeans(mDraws.sim)[dfData$ind == 'PC1'], rowMeans(mDraws.sim)[dfData$ind == 'PC2'],
-       col=c(1,2)[as.numeric(dfData$fTreatment[dfData$ind == 'PC1'])], pch='1')
+       col=c(1:nlevels(dfData$fTreatment))[as.numeric(dfData$fTreatment[dfData$ind == 'PC1'])], pch='1')
+legend('topright', legend = levels(dfData$fTreatment), fill=c(1:nlevels(dfData$fTreatment)))
 
 plot(dfData$values[dfData$ind == 'PC1'], dfData$values[dfData$ind == 'PC2'], 
-     col=c(1,2)[as.numeric(dfData$fTreatment[dfData$ind == 'PC1'])], main='PCA Components - original and model 3',
+     col=c(1:nlevels(dfData$fTreatment))[as.numeric(dfData$fTreatment[dfData$ind == 'PC1'])], main='PCA Components - original and model 1',
      xlab='PC1', ylab='PC2', xlim=c(-3, 3), ylim=c(-2, 2))
 
 apply(mDraws.sim, 2, function(x) {
   points(x[dfData$ind == 'PC1'], x[dfData$ind == 'PC2'],
-         col=c(1,2)[as.numeric(dfData$fTreatment[dfData$ind == 'PC1'])], pch=20)
+         col=c(1:nlevels(dfData$fTreatment))[as.numeric(dfData$fTreatment[dfData$ind == 'PC1'])], pch=20)
 })
 
 
@@ -406,14 +408,14 @@ apply(mDraws.sim, 2, function(x) {
 # mean(mCoef[,7])
 # ##########################################
 
-# m = cbind(extract(fit.stan.4)$sigmaRan, extract(fit.stan.4)$sigmaPop) 
-# dim(m)
-# m = log(m)
-# colnames(m) = c('Treatment', 'Genotype', 'TrGt', 'TechnicalRep', 'Residual')
-# pairs(m, pch=20, cex=0.5, col='grey')
-# 
-# df = stack(data.frame(m[,-5]))
-# histogram(~ values | ind, data=df, xlab='Log SD', scales=list(relation='free'))
+m = cbind(extract(fit.stan.2)$sigmaRan, extract(fit.stan.2)$sigmaPop)
+dim(m)
+m = log(m)
+colnames(m) = c('Treatment', 'Patient','Residual')
+pairs(m, pch=20, cex=0.5, col='grey')
+
+df = stack(data.frame(m))
+histogram(~ values | ind, data=df, xlab='Log SD', scales=list(relation='free'))
 # 
 # ## calculate bayesian p-value for this test statistic
 # getPValue = function(Trep, Tobs){
