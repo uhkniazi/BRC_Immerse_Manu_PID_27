@@ -80,6 +80,13 @@ ivProb = apply(mData, 1, function(inData) {
 hist(ivProb)
 
 #### check ercc quality, this was done in EDA script
+mData.bk = mData
+dfSample.bk = dfSample
+
+## analyse the T and B cell datasets separately
+i = grep('B', dfSample.bk$group3)
+dfSample = dfSample.bk[i,]
+mData = mData.bk[,i]
 
 library(DESeq2)
 # mData = rbind(mData)#, mErcc)
@@ -89,11 +96,11 @@ library(DESeq2)
 ######### do a comparison with deseq2
 ## due to the nesting effect creating linear combinations
 ## the patient ids are not used in this case
-str(dfSample)
-fTreatment = as.character(factor(dfSample$group2):factor(dfSample$group3))
-fTreatment = gsub(':', '_', fTreatment)
-fTreatment = factor(fTreatment)
-dfDesign = data.frame(Treatment = fTreatment, 
+# str(dfSample)
+# fTreatment = as.character(factor(dfSample$group2):factor(dfSample$group3))
+# fTreatment = gsub(':', '_', fTreatment)
+# fTreatment = factor(fTreatment)
+dfDesign = data.frame(Treatment = factor(dfSample$group2), 
                       Patient=factor(dfSample$group1),
                       row.names=colnames(mData))
 
@@ -106,7 +113,7 @@ oDseq = DESeq(oDseq)
 plotDispEsts(oDseq)
 levels(dfDesign$Treatment)
 ## choose the contrast
-oRes = results(oDseq, contrast = c('Treatment', 'SC_T3_T', 'SC_T0_T'))
+oRes = results(oDseq, contrast = c('Treatment', 'SC_T3', 'SC_T0'))
 plotMA(oRes)
 dfResults = as.data.frame(oRes)
 # i = grep('ercc', rownames(dfResults), ignore.case=T)
@@ -135,4 +142,4 @@ table(dfResults$adj.P.Val < 0.1)
 quantile(round(abs(dfResults$logFC),3), 0:10/10)
 table(dfResults$adj.P.Val < 0.01 & abs(dfResults$logFC) > 0.2)
 ## save the results 
-write.csv(dfResults, file='dataID51/results/DEAnalysis_SC_T3_TvsSC_T0_T.xls')
+write.csv(dfResults, file='dataID51/results/Bcells/DEAnalysis_SC_T3vsSC_T0.xls')
