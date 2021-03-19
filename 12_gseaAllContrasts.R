@@ -8,7 +8,7 @@
 ## libraries to load
 library(gage)
 
-lFiles = list.files('dataID50/results/', pattern='DEAnalysis*', full.names = T, ignore.case = T)
+lFiles = list.files('dataID51/results/Bcells/', pattern='DEAnalysis*', full.names = T, ignore.case = T)
 
 ldfData = lapply(lFiles, function(x) as.data.frame(read.csv(x, header=T, row.names=1, stringsAsFactors = F)))
 names(ldfData) = lFiles
@@ -24,44 +24,20 @@ ldfData = lapply(ldfData, function(df){
 
 sapply(ldfData, function(df) identical(rownames(df), rn))
 
-# ## map the ensemble ids to enterez ids
-# ## some genes will be missing or duplicated
-# # do some acrobatics to match both the tables and names
-# library(org.Hs.eg.db)
-# df = select(org.Hs.eg.db, keys = rn, columns = 'ENTREZID', keytype = 'ENSEMBL')
-# df = na.omit(df)
-# table(duplicated(df$ENSEMBL))
-# table(duplicated(df$ENTREZID))
-# # choose unique ids
-# i = match(rn, df$ENSEMBL)
-# df = df[i,]
-# df = na.omit(df)
-# i = match(df$ENSEMBL, rn)
-# rn = rn[i]
-# identical(rn, df$ENSEMBL)
-# dim(df)
-# dim(na.omit(df))
-
-# ## match the tables and names
-# ldfData = lapply(ldfData, function(df2){
-#   df2 = df2[rn,]
-#   df2$ENTREZID = df$ENTREZID
-#   return(df2)
-# })
-# 
-# # sanity checks
-# rn = rownames(ldfData[[1]])
-# head(rn)
-# rm(df)
-# sapply(ldfData, function(df) identical(rownames(df), rn))
 
 #cvTitle = gsub('results//DEAnalysis(\\w+).xls', '\\1', names(ldfData))
-cvTitle = gsub('dataID50/results//DEAnalysis_', '', names(ldfData))
+cvTitle = gsub('dataID51/results/Bcells//DEAnalysis_', '', names(ldfData))
 cvTitle = gsub('.xls', '', cvTitle)
 
 ## load msig db data - c2 and c5
-oMsigGS.c2 = readList('~/Data/MetaData/msigdb_c2.all.v5.2.entrez.gmt')
-oMsigGS.c5 = readList('~/Data/MetaData/msigdb_c5.all.v5.2.entrez.gmt')
+# oMsigGS.c2 = readList('~/Data/MetaData/msigdb_c2.all.v5.2.entrez.gmt')
+# oMsigGS.c5 = readList('~/Data/MetaData/msigdb_c5.all.v5.2.entrez.gmt')
+oMsigGS.c2 = readList('~/Data/MetaData/c2.all.v7.2.entrez.gmt')
+oMsigGS.c3 = readList('~/Data/MetaData/c3.all.v7.2.entrez.gmt')
+oMsigGS.c5 = readList('~/Data/MetaData/c5.all.v7.2.entrez.gmt')
+oMsigGS.c7 = readList('~/Data/MetaData/c7.all.v7.2.entrez.gmt')
+oMsigGS.c8 = readList('~/Data/MetaData/c8.all.v7.2.entrez.gmt')
+oMsigGS.hm = readList('~/Data/MetaData/h.all.v7.2.entrez.gmt')
 
 ## choose a contrast to work with loop through
 for (i in 1:length(ldfData)){
@@ -84,15 +60,42 @@ for (i in 1:length(ldfData)){
   #i = which(dfLess$p.val < 0.01)
   #rownames(dfLess[i,])
   
-  write.csv(dfGreater[,c('p.val', 'q.val', 'set.size')], file=paste('dataID50/results/', cvTitle[i], '_upregulated_pathways_mSigDb_c2_curated.xls', sep=''))
-  write.csv(dfLess[,c('p.val', 'q.val', 'set.size')], file=paste('dataID50/results/', cvTitle[i], '_downregulated_pathways_mSigDb_c2_curated.xls', sep=''))
+  write.csv(dfGreater[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_upregulated_pathways_mSigDb_c2_curated.xls', sep=''))
+  write.csv(dfLess[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_downregulated_pathways_mSigDb_c2_curated.xls', sep=''))
+  
+  ## c3
+  oGage = gage(iContFc, oMsigGS.c3)
+  dfGreater = data.frame(oGage$greater)
+  dfLess = data.frame(oGage$less)
+  write.csv(dfGreater[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_upregulated_pathways_mSigDb_c3_curated.xls', sep=''))
+  write.csv(dfLess[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_downregulated_pathways_mSigDb_c3_curated.xls', sep=''))
   
   ## c5
   oGage = gage(iContFc, oMsigGS.c5)
-  
   dfGreater = data.frame(oGage$greater)
   dfLess = data.frame(oGage$less)
+  write.csv(dfGreater[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_upregulated_pathways_mSigDb_c5_curated.xls', sep=''))
+  write.csv(dfLess[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_downregulated_pathways_mSigDb_c5_curated.xls', sep=''))
   
-  write.csv(dfGreater[,c('p.val', 'q.val', 'set.size')], file=paste('dataID50/results/', cvTitle[i], '_upregulated_pathways_mSigDb_c5.xls', sep=''))
-  write.csv(dfLess[,c('p.val', 'q.val', 'set.size')], file=paste('dataID50/results/', cvTitle[i], '_downregulated_pathways_mSigDb_c5.xls', sep=''))
+  ## c7
+  oGage = gage(iContFc, oMsigGS.c7)
+  dfGreater = data.frame(oGage$greater)
+  dfLess = data.frame(oGage$less)
+  write.csv(dfGreater[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_upregulated_pathways_mSigDb_c7_curated.xls', sep=''))
+  write.csv(dfLess[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_downregulated_pathways_mSigDb_c7_curated.xls', sep=''))
+  
+  ## c8
+  oGage = gage(iContFc, oMsigGS.c8)
+  dfGreater = data.frame(oGage$greater)
+  dfLess = data.frame(oGage$less)
+  write.csv(dfGreater[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_upregulated_pathways_mSigDb_c8_curated.xls', sep=''))
+  write.csv(dfLess[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_downregulated_pathways_mSigDb_c8_curated.xls', sep=''))
+  
+  ## hallmark
+  oGage = gage(iContFc, oMsigGS.hm)
+  dfGreater = data.frame(oGage$greater)
+  dfLess = data.frame(oGage$less)
+  write.csv(dfGreater[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_upregulated_pathways_mSigDb_hm_curated.xls', sep=''))
+  write.csv(dfLess[,c('p.val', 'q.val', 'set.size')], file=paste('dataID51/results/Bcells/', cvTitle[i], '_downregulated_pathways_mSigDb_hm_curated.xls', sep=''))
 }
+
