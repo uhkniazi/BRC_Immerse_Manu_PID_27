@@ -3,7 +3,7 @@
 # DESC: merge the gsea results for all contrasts in one table
 # Date: 19/3/2020
 
-lFiles = list.files('dataID51/results/Tcells/', pattern='*pathways_mSigDb_c2_*', full.names = T, ignore.case = F)
+lFiles = list.files('dataID51/results/Bcells/', pattern='*pathways_mSigDb_c2_*', full.names = T, ignore.case = F)
 
 # load the files
 ldfData = lapply(lFiles, function(x) read.csv(x, row.names=1))
@@ -22,10 +22,10 @@ ldfData.up = ldfData[grepl(lFiles, pattern = 'upregulated')]
 ldfData.down = ldfData[grepl(lFiles, pattern = 'downregulated')]
 
 ## set the names for each contrast
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
 names(ldfData.up) = sn
 
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
 names(ldfData.down) = sn
 
 ## create a table/matrix of p-values
@@ -93,12 +93,12 @@ head(dfMerged.c2)
 tail(dfMerged.c2)
 
 ########
-write.csv(dfMerged.c2, file='dataID51/results/Tcells/gsea_msigdb_c2_merged.xls')
+write.csv(dfMerged.c2, file='dataID51/results/Bcells/gsea_msigdb_c2_merged.xls')
 
 ###################### repeat for other databases
 ################### C3
 rm(lFiles)
-lFiles = list.files('dataID51/results/Tcells/', pattern='*pathways_mSigDb_c3_*', full.names = T, ignore.case = F)
+lFiles = list.files('dataID51/results/Bcells/', pattern='*pathways_mSigDb_c3_*', full.names = T, ignore.case = F)
 
 # load the files
 ldfData = lapply(lFiles, function(x) read.csv(x, row.names=1))
@@ -117,10 +117,10 @@ ldfData.up = ldfData[grepl(lFiles, pattern = 'upregulated')]
 ldfData.down = ldfData[grepl(lFiles, pattern = 'downregulated')]
 
 ## set the names for each contrast
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
 names(ldfData.up) = sn
 
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
 names(ldfData.down) = sn
 
 ## create a table/matrix of p-values
@@ -188,12 +188,12 @@ head(dfMerged.c3)
 tail(dfMerged.c3)
 
 ########
-write.csv(dfMerged.c3, file='dataID51/results/Tcells/gsea_msigdb_c3_merged.xls')
+write.csv(dfMerged.c3, file='dataID51/results/Bcells/gsea_msigdb_c3_merged.xls')
 
 ########################
 ####### C5
 rm(lFiles)
-lFiles = list.files('dataID51/results/Tcells/', pattern='*pathways_mSigDb_c5_*', full.names = T, ignore.case = F)
+lFiles = list.files('dataID51/results/Bcells/', pattern='*pathways_mSigDb_c5_*', full.names = T, ignore.case = F)
 
 # load the files
 ldfData = lapply(lFiles, function(x) read.csv(x, row.names=1))
@@ -212,10 +212,10 @@ ldfData.up = ldfData[grepl(lFiles, pattern = 'upregulated')]
 ldfData.down = ldfData[grepl(lFiles, pattern = 'downregulated')]
 
 ## set the names for each contrast
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
 names(ldfData.up) = sn
 
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
 names(ldfData.down) = sn
 
 ## create a table/matrix of p-values
@@ -283,12 +283,12 @@ head(dfMerged.c5)
 tail(dfMerged.c5)
 
 ########
-write.csv(dfMerged.c5, file='dataID51/results/Tcells/gsea_msigdb_c5_merged.xls')
+write.csv(dfMerged.c5, file='dataID51/results/Bcells/gsea_msigdb_c5_merged.xls')
 
 ########################################################
 ############ C7
 rm(lFiles)
-lFiles = list.files('dataID51/results/Tcells/', pattern='*pathways_mSigDb_c7_*', full.names = T, ignore.case = F)
+lFiles = list.files('dataID51/results/Bcells/', pattern='*pathways_mSigDb_c7_*', full.names = T, ignore.case = F)
 
 # load the files
 ldfData = lapply(lFiles, function(x) read.csv(x, row.names=1))
@@ -307,10 +307,10 @@ ldfData.up = ldfData[grepl(lFiles, pattern = 'upregulated')]
 ldfData.down = ldfData[grepl(lFiles, pattern = 'downregulated')]
 
 ## set the names for each contrast
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
 names(ldfData.up) = sn
 
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
 names(ldfData.down) = sn
 
 ## create a table/matrix of p-values
@@ -378,12 +378,12 @@ head(dfMerged.c7)
 tail(dfMerged.c7)
 
 ########
-write.csv(dfMerged.c7, file='dataID51/results/Tcells/gsea_msigdb_c7_merged.xls')
+write.csv(dfMerged.c7, file='dataID51/results/Bcells/gsea_msigdb_c7_merged.xls')
 
 #######################################################
 ### C8
 rm(lFiles)
-lFiles = list.files('dataID51/results/Tcells/', pattern='*pathways_mSigDb_c8_*', full.names = T, ignore.case = F)
+lFiles = list.files('dataID51/results/Bcells/', pattern='*pathways_mSigDb_c8_*', full.names = T, ignore.case = F)
 
 # load the files
 ldfData = lapply(lFiles, function(x) read.csv(x, row.names=1))
@@ -402,10 +402,10 @@ ldfData.up = ldfData[grepl(lFiles, pattern = 'upregulated')]
 ldfData.down = ldfData[grepl(lFiles, pattern = 'downregulated')]
 
 ## set the names for each contrast
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
 names(ldfData.up) = sn
 
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
 names(ldfData.down) = sn
 
 ## create a table/matrix of p-values
@@ -473,12 +473,12 @@ head(dfMerged.c8)
 tail(dfMerged.c8)
 
 ########
-write.csv(dfMerged.c8, file='dataID51/results/Tcells/gsea_msigdb_c8_merged.xls')
+write.csv(dfMerged.c8, file='dataID51/results/Bcells/gsea_msigdb_c8_merged.xls')
 
 ######################################################
 ######### hallmark
 rm(lFiles)
-lFiles = list.files('dataID51/results/Tcells/', pattern='*pathways_mSigDb_hm_*', full.names = T, ignore.case = F)
+lFiles = list.files('dataID51/results/Bcells/', pattern='*pathways_mSigDb_hm_*', full.names = T, ignore.case = F)
 
 # load the files
 ldfData = lapply(lFiles, function(x) read.csv(x, row.names=1))
@@ -497,10 +497,10 @@ ldfData.up = ldfData[grepl(lFiles, pattern = 'upregulated')]
 ldfData.down = ldfData[grepl(lFiles, pattern = 'downregulated')]
 
 ## set the names for each contrast
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_up.+', '\\1', names(ldfData.up))
 names(ldfData.up) = sn
 
-sn = gsub('dataID51/results/Tcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
+sn = gsub('dataID51/results/Bcells//(.+vs.+)_down.+', '\\1', names(ldfData.down))
 names(ldfData.down) = sn
 
 ## create a table/matrix of p-values
@@ -568,7 +568,7 @@ head(dfMerged.hm)
 tail(dfMerged.hm)
 
 ########
-write.csv(dfMerged.hm, file='dataID51/results/Tcells/gsea_msigdb_hm_merged.xls')
+write.csv(dfMerged.hm, file='dataID51/results/Bcells/gsea_msigdb_hm_merged.xls')
 
 ####################################################
 ########## merge all the results
@@ -578,22 +578,22 @@ write.csv(dfMerged.hm, file='dataID51/results/Tcells/gsea_msigdb_hm_merged.xls')
 table(dfMerged.c2$groups)
 t = rowSums(mMerged.c2.bin)
 table(t, dfMerged.c2$groups)
-dfMerged.c2.sub = dfMerged.c2[dfMerged.c2$groups != 3,]
+dfMerged.c2.sub = dfMerged.c2[dfMerged.c2$groups != 4,]
 
 table(dfMerged.c3$groups)
 t = rowSums(mMerged.c3.bin)
 table(t, dfMerged.c3$groups)
-dfMerged.c3.sub = dfMerged.c3[dfMerged.c3$groups != 3,]
+dfMerged.c3.sub = dfMerged.c3[dfMerged.c3$groups != 2,]
 
 table(dfMerged.c5$groups)
 t = rowSums(mMerged.c5.bin)
 table(t, dfMerged.c5$groups)
-dfMerged.c5.sub = dfMerged.c5[dfMerged.c5$groups != 3,]
+dfMerged.c5.sub = dfMerged.c5[dfMerged.c5$groups != 4,]
 
 table(dfMerged.c7$groups)
 t = rowSums(mMerged.c7.bin)
 table(t, dfMerged.c7$groups)
-dfMerged.c7.sub = dfMerged.c7[dfMerged.c7$groups != 3,]
+dfMerged.c7.sub = dfMerged.c7[dfMerged.c7$groups != 4,]
 
 table(dfMerged.c8$groups)
 t = rowSums(mMerged.c8.bin)
@@ -603,7 +603,7 @@ dfMerged.c8.sub = dfMerged.c8[dfMerged.c8$groups != 3,]
 table(dfMerged.hm$groups)
 t = rowSums(mMerged.hm.bin)
 table(t, dfMerged.hm$groups)
-dfMerged.hm.sub = dfMerged.hm[dfMerged.hm$groups != 2,]
+dfMerged.hm.sub = dfMerged.hm[dfMerged.hm$groups != 1,]
 
 dfMerged = rbind(dfMerged.c2.sub, dfMerged.c3.sub, dfMerged.c5.sub,
                  dfMerged.c7.sub, dfMerged.c8.sub, dfMerged.hm.sub)
@@ -611,7 +611,7 @@ dfMerged = droplevels.data.frame(dfMerged)
 dim(dfMerged)
 str(dfMerged)
 
-write.csv(dfMerged, file='dataID51/results/Tcells/gsea_msigdb_significant_6db_merged.xls')
+write.csv(dfMerged, file='dataID51/results/Bcells/gsea_msigdb_significant_6db_merged.xls')
 
 ### heatmaps
 ### just for a quick visual check, do not use for results
@@ -641,13 +641,13 @@ library(RColorBrewer)
 aheatmap(mMat, annRow = ann, scale = 'none', Rowv = order(g2:g1), Colv=NA, cexRow=5, cexCol = 0.6, #labCol=c('C2vC1', 'K1vC1', 'K2vC2', 'K2vK1'), 
          col=c('white', brewer.pal(9, 'YlOrRd')))
 
-pdf('dataID51/results/Tcells/gsea_msigdb_significant_merged.pdf')
+pdf('dataID51/results/Bcells/gsea_msigdb_significant_merged.pdf')
 aheatmap(mMat, annRow = ann, scale = 'none', Rowv = order(g2:g1), Colv=NA, cexRow=5, cexCol = 0.6, #labCol=c('C2vC1', 'K1vC1', 'K2vC2', 'K2vK1'), 
          col=c('white', brewer.pal(9, 'YlOrRd')))
 dev.off(dev.cur())
 
-f = ann$DB == 'msigdb-c8'
-f = grep('t_cell', rownames(mMat), ignore.case = T)
+f = ann$DB == 'msigdb-c7'
+f = grep('t_cell|tcell', rownames(mMat), ignore.case = T)
 ann = data.frame(DB=droplevels(g2[f]))
 aheatmap(mMat[f,], annRow = ann,  scale = 'none', Rowv = order(g2[f]:g1[f]), Colv=NA, cexRow=5, cexCol = 0.6, #labCol=c('C2vC1', 'K1vC1', 'K2vC2', 'K2vK1'), 
          col=c('white', brewer.pal(9, 'YlOrRd')), main='T cell')
